@@ -36,6 +36,20 @@ function nowInYangon() {
   return new Date(Date.now() + YANGON_OFFSET_MINUTES * 60 * 1000);
 }
 
+function isAtLeast18(dobValue) {
+  const dob = new Date(dobValue);
+  if (isNaN(dob.getTime())) {
+    return false;
+  }
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age >= 18;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -52,11 +66,17 @@ module.exports = async function handler(req, res) {
   if (!body.termsAgreed) {
     return res.status(400).json({ error: 'Terms and Conditions must be agreed to.' });
   }
+  if (!isAtLeast18(body.dateOfBirth)) {
+    return res.status(400).json({ error: 'You must be at least 18 years old to register.' });
+  }
   if (body.bringPlusOne === 'Yes') {
     for (const field of PLUS_ONE_FIELDS) {
       if (!body[field]) {
         return res.status(400).json({ error: 'Missing required plus-one field: ' + field });
       }
+    }
+    if (!isAtLeast18(body.plusOneDateOfBirth)) {
+      return res.status(400).json({ error: 'Plus One must be at least 18 years old.' });
     }
   }
 

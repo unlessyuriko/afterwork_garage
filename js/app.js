@@ -116,6 +116,20 @@
     return !!value && digitsOnly.length >= 7 && /^[0-9+\-\s]+$/.test(value);
   }
 
+  function isAtLeast18(dobValue) {
+    var dob = new Date(dobValue);
+    if (isNaN(dob.getTime())) {
+      return false;
+    }
+    var today = new Date();
+    var age = today.getFullYear() - dob.getFullYear();
+    var monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age >= 18;
+  }
+
   /* ---------- Page 1 ---------- */
 
   document.getElementById('btn-register-now').addEventListener('click', function () {
@@ -194,7 +208,13 @@
       isValid = false;
     }
 
-    if (!dobInput.value.trim()) {
+    var dobValue = dobInput.value.trim();
+    if (!dobValue) {
+      errDob.textContent = 'Date of Birth is required.';
+      showFieldError(dobInput, errDob);
+      isValid = false;
+    } else if (!isAtLeast18(dobValue)) {
+      errDob.textContent = 'You must be at least 18 years old to register.';
       showFieldError(dobInput, errDob);
       isValid = false;
     }
@@ -220,7 +240,13 @@
         isValid = false;
       }
 
-      if (!plusOneDobInput.value.trim()) {
+      var plusOneDobValue = plusOneDobInput.value.trim();
+      if (!plusOneDobValue) {
+        errPlusOneDob.textContent = "Plus One's Date of Birth is required.";
+        showFieldError(plusOneDobInput, errPlusOneDob);
+        isValid = false;
+      } else if (!isAtLeast18(plusOneDobValue)) {
+        errPlusOneDob.textContent = 'Plus One must be at least 18 years old.';
         showFieldError(plusOneDobInput, errPlusOneDob);
         isValid = false;
       }
