@@ -545,42 +545,54 @@
     document.getElementById('share-modal').classList.remove('visible');
   });
 
-  // Renders the actual live Page 5 poster to a PNG blob — same look guests
-  // see on screen — with only the Share button and screenshot hint hidden
-  // for the capture, then restored right after. Never includes a link,
+  // Renders the actual live Page 5 poster to a PNG blob — exactly what the guest
+  // sees on screen, with only the Share button removed. Never includes a link,
   // since this invitation is private.
-  function generatePosterImageBlob() {
+  async function generatePosterImageBlob() {
     if (typeof html2canvas === 'undefined') {
-      return Promise.reject(new Error('html2canvas not available'));
+      throw new Error('html2canvas not available');
     }
     var posterShell = document.querySelector('.poster-shell');
-    var shareButton = document.getElementById('btn-share');
-    var shareHint = document.querySelector('.share-hint');
 
-    shareButton.style.visibility = 'hidden';
-    shareHint.style.visibility = 'hidden';
+    // Wait for the brush/body web fonts to finish loading; capturing before they
+    // are ready renders text in a fallback font or too faintly.
+    if (document.fonts && document.fonts.ready) {
+      try { await document.fonts.ready; } catch (e) { /* proceed anyway */ }
+    }
 
     // No useCORS here: our background images are same-origin, so a normal
     // (non-CORS-mode) fetch works. Forcing useCORS made html2canvas re-fetch
     // them in CORS mode, which fails silently against static hosting that
     // doesn't send CORS headers for those files — the actual cause of the
     // washed-out/failed captures.
-    return html2canvas(posterShell, { backgroundColor: '#0d2f10', scale: 3 })
-      .then(function (canvas) {
-        return new Promise(function (resolve, reject) {
-          canvas.toBlob(function (blob) {
-            if (blob) {
-              resolve(blob);
-            } else {
-              reject(new Error('Could not generate image'));
-            }
-          }, 'image/png');
-        });
-      })
-      .finally(function () {
-        shareButton.style.visibility = '';
-        shareHint.style.visibility = '';
-      });
+    var canvas = await html2canvas(posterShell, {
+      backgroundColor: '#0d2f10',
+      scale: 3,
+      onclone: function (clonedDoc) {
+        // The page fade-in animation restarts inside html2canvas's cloned
+        // document and can be snapshotted mid-fade — which is what made the
+        // captured text look dimmed. Force everything to its final, fully
+        // opaque state, and hide only the Share button (in the clone, so the
+        // real page never flickers). The "take a screenshot" rewards hint is an
+        // on-screen instruction to the guest, so it is hidden from the image too.
+        var style = clonedDoc.createElement('style');
+        style.textContent =
+          '*{animation:none !important;transition:none !important;}' +
+          '.page,.page.active{opacity:1 !important;transform:none !important;}' +
+          '#btn-share,.share-hint{visibility:hidden !important;}';
+        clonedDoc.head.appendChild(style);
+      }
+    });
+
+    return await new Promise(function (resolve, reject) {
+      canvas.toBlob(function (blob) {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Could not generate image'));
+        }
+      }, 'image/png');
+    });
   }
 
   async function shareToStory() {
