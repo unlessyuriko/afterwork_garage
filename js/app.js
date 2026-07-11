@@ -585,6 +585,7 @@
 
   async function shareToStory() {
     var shareText = "I'm officially on the A-list for Afterwork by Heineken.";
+    var fileName = 'afterwork-invite.png';
     var blob = null;
 
     try {
@@ -593,28 +594,87 @@
       console.error('Failed to generate share image:', err);
     }
 
-    if (blob) {
+    // If the image itself couldn't be rendered, the only thing left is to ask
+    // the guest to screenshot the page manually.
+    if (!blob) {
+      showShareFallback('screenshot');
+      return;
+    }
+
+    var file = new File([blob], fileName, { type: 'image/png' });
+
+    // 1) Preferred path — the OS native share sheet (mobile + share-capable
+    //    desktops). This is what lets the guest send the image straight into
+    //    Instagram, Facebook, Telegram, Teams, Mail, etc. in one step.
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        var file = new File([blob], 'afterwork-invite.png', { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: 'AFTERWORK by Heineken',
-            text: shareText
-          });
-          return;
-        }
+        await navigator.share({
+          files: [file],
+          title: 'AFTERWORK by Heineken',
+          text: shareText
+        });
+        return;
       } catch (err) {
         if (err && err.name === 'AbortError') {
-          return;
+          return; // guest deliberately dismissed the share sheet
         }
+        // Anything else (permission/hardware error) — fall through to download.
+        console.error('Native share failed, falling back to download:', err);
       }
     }
 
-    showShareFallback();
+    // 2) Universal fallback — hand the guest the real PNG so they can put it into
+    //    any app on any platform (Windows/Mac/anywhere the native share sheet
+    //    isn't available). We do BOTH: copy the image to the clipboard (great for
+    //    pasting straight into Teams/Telegram/email on desktop) and download the
+    //    file (for uploading to Facebook/Instagram or if clipboard isn't allowed).
+    var copied = await copyImageToClipboard(blob);
+    downloadImage(blob, fileName);
+    showShareFallback(copied ? 'downloaded-copied' : 'downloaded');
   }
 
-  function showShareFallback() {
+  // Copies the PNG to the system clipboard where supported (desktop Chrome/Edge/
+  // Safari). Returns true on success, false if unsupported or blocked.
+  async function copyImageToClipboard(blob) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        return true;
+      }
+    } catch (err) {
+      // e.g. "Document is not focused" or permission denied — not fatal, we still
+      // download the file below.
+      console.error('Copy to clipboard failed:', err);
+    }
+    return false;
+  }
+
+  // Triggers a browser download of the given blob without leaving the page.
+  function downloadImage(blob, fileName) {
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    // Revoke slightly later so the download has time to start.
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  // reason: 'downloaded-copied' (saved + on clipboard), 'downloaded' (saved only),
+  // or 'screenshot' (image couldn't be generated at all).
+  var SHARE_FALLBACK_MESSAGES = {
+    'downloaded-copied': 'Your invitation image has been saved to your device and copied to your clipboard. Paste it (Ctrl/Cmd + V) into Telegram, Teams or email, or upload the saved file to Facebook, Instagram — anywhere you like.',
+    'downloaded': 'Your invitation image has been saved to your device. You can now share it to Facebook, Instagram, Telegram, Teams, email — anywhere you like.',
+    'screenshot': 'We could not generate the image automatically. Please take a screenshot of this page and share it to your story.'
+  };
+
+  function showShareFallback(reason) {
+    var message = document.getElementById('share-modal-message');
+    if (message) {
+      message.textContent = SHARE_FALLBACK_MESSAGES[reason] || SHARE_FALLBACK_MESSAGES.screenshot;
+    }
     document.getElementById('share-modal').classList.add('visible');
   }
 
