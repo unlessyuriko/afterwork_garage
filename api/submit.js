@@ -78,6 +78,11 @@ module.exports = async function handler(req, res) {
     if (!isAtLeast18(body.plusOneDateOfBirth)) {
       return res.status(400).json({ error: 'Plus One must be at least 18 years old.' });
     }
+    const mainDigits = body.phoneNumber.replace(/[^0-9]/g, '');
+    const plusOneDigits = body.plusOnePhoneNumber.replace(/[^0-9]/g, '');
+    if (mainDigits === plusOneDigits) {
+      return res.status(400).json({ error: "Plus One's phone number must be different from the attendee's phone number." });
+    }
   }
 
   const bringingPlusOne = body.bringPlusOne === 'Yes';
@@ -88,12 +93,17 @@ module.exports = async function handler(req, res) {
     const dupeCheck = pool.request();
     dupeCheck.input('eventName', sql.NVarChar(255), body.eventName);
     dupeCheck.input('phoneNumber', sql.NVarChar(20), body.phoneNumber);
+    dupeCheck.input('plusOnePhoneNumber', sql.NVarChar(20), bringingPlusOne ? body.plusOnePhoneNumber : null);
     const dupeResult = await dupeCheck.query(
       'SELECT TOP 1 id FROM afterwork.EventRegistrations ' +
-      'WHERE event_name = @eventName AND phone_number = @phoneNumber'
+      'WHERE event_name = @eventName AND (' +
+      '  phone_number = @phoneNumber OR plus_one_phone_number = @phoneNumber' +
+      '  OR (@plusOnePhoneNumber IS NOT NULL AND phone_number = @plusOnePhoneNumber)' +
+      '  OR (@plusOnePhoneNumber IS NOT NULL AND plus_one_phone_number = @plusOnePhoneNumber)' +
+      ')'
     );
     if (dupeResult.recordset.length > 0) {
-      return res.status(409).json({ error: 'This phone number has already registered for this event.' });
+      return res.status(409).json({ error: 'One or both phone numbers have already registered for this event.' });
     }
 
     const request = pool.request();

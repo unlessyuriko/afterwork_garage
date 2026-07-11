@@ -146,6 +146,19 @@
   document.getElementById('input-phone').addEventListener('input', filterPhoneInput);
   document.getElementById('input-plusone-phone').addEventListener('input', filterPhoneInput);
 
+  // Clear the age error as soon as a valid 18+ date is picked, without waiting for Next.
+  function watchDobForLiveClear(inputId, errorId) {
+    var input = document.getElementById(inputId);
+    var error = document.getElementById(errorId);
+    input.addEventListener('change', function () {
+      if (input.value.trim() && isAtLeast18(input.value.trim())) {
+        clearFieldError(input, error);
+      }
+    });
+  }
+  watchDobForLiveClear('input-dob', 'err-dob');
+  watchDobForLiveClear('input-plusone-dob', 'err-plusone-dob');
+
   document.querySelectorAll('input[name="plusOne"]').forEach(function (radio) {
     radio.addEventListener('change', function () {
       togglePlusOneFields(radio.value === 'Yes' && radio.checked);
@@ -236,6 +249,10 @@
         isValid = false;
       } else if (!isValidPhone(plusOnePhoneValue)) {
         errPlusOnePhone.textContent = 'Please enter a valid phone number (numbers only).';
+        showFieldError(plusOnePhoneInput, errPlusOnePhone);
+        isValid = false;
+      } else if (phoneValue && plusOnePhoneValue.replace(/[^0-9]/g, '') === phoneValue.replace(/[^0-9]/g, '')) {
+        errPlusOnePhone.textContent = "Plus One's phone number must be different from yours.";
         showFieldError(plusOnePhoneInput, errPlusOnePhone);
         isValid = false;
       }
