@@ -92,6 +92,32 @@ body {
   --poster-bg-image: url('../assets/background-body.jpg');
 }
 
+/* ---------- Share card (off-screen, rendered to an image for sharing) ---------- */
+
+.share-card {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 375px;
+  height: 667px;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 34px 26px 26px;
+  font-family: var(--font-body);
+  color: var(--color-white);
+  background-image:
+    linear-gradient(180deg, rgba(0, 20, 6, 0.12) 0%, rgba(0, 15, 4, 0.08) 45%, rgba(0, 10, 3, 0.55) 100%),
+    url('../assets/background-body.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+.share-card .success-message {
+  margin-top: 28px;
+}
+
 /* vignette */
 .poster-shell::before {
   content: '';

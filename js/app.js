@@ -545,14 +545,17 @@
     document.getElementById('share-modal').classList.remove('visible');
   });
 
-  // Renders the poster (not just the message div) to a PNG blob so guests can
-  // share the actual invite image — never a link, since this invitation is private.
+  // Renders the dedicated off-screen share card (not the live poster, which has
+  // buttons/hints and a deliberately dark overlay meant for in-app viewing) to a
+  // PNG blob so guests can share a clean, bright invite image — never a link,
+  // since this invitation is private.
   function generatePosterImageBlob() {
     if (typeof html2canvas === 'undefined') {
       return Promise.reject(new Error('html2canvas not available'));
     }
-    var posterShell = document.querySelector('.poster-shell');
-    return html2canvas(posterShell, { useCORS: true, backgroundColor: null, scale: 2 }).then(function (canvas) {
+    document.getElementById('share-card-name').textContent = state.name || 'Guest';
+    var shareCard = document.getElementById('share-card');
+    return html2canvas(shareCard, { useCORS: true, backgroundColor: null, scale: 3 }).then(function (canvas) {
       return new Promise(function (resolve, reject) {
         canvas.toBlob(function (blob) {
           if (blob) {
