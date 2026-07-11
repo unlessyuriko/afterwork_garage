@@ -1,0 +1,99 @@
+const sql = require('mssql');
+
+const REQUIRED_FIELDS = ['eventName', 'name', 'phoneNumber', 'dateOfBirth', 'organization', 'bringPlusOne', 'interest'];
+const PLUS_ONE_FIELDS = ['plusOneName', 'plusOnePhoneNumber', 'plusOneDateOfBirth', 'plusOneOrganization'];
+const YANGON_OFFSET_MINUTES = 6 * 60 + 30;
+
+let poolPromise;
+
+function getPool() {
+  if (!poolPromise) {
+    poolPromise = sql.connect({
+      server: process.env.SYNAPSE_SERVER,
+      database: process.env.SYNAPSE_DATABASE,
+      authentication: {
+        type: 'azure-active-directory-service-principal-secret',
+        options: {
+          clientId: process.env.AZURE_CLIENT_ID,
+          clientSecret: process.env.AZURE_CLIENT_SECRET,
+          tenantId: process.env.AZURE_TENANT_ID
+        }
+      },
+      options: {
+        encrypt: true
+      }
+    }).catch(function (err) {
+      poolPromise = null;
+      throw err;
+    });
+  }
+  return poolPromise;
+}
+
+// Server clock is UTC. Shifting the epoch by the Yangon offset means this
+// Date's UTC getters (which tedious/mssql reads by default) equal Yangon wall-clock time.
+function nowInYangon() {
+  return new Date(Date.now() + YANGON_OFFSET_MINUTES * 60 * 1000);
+}
+
+module.exports = async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const body = req.body || {};
+
+  for (const field of REQUIRED_FIELDS) {
+    if (!body[field]) {
+      return res.status(400).json({ error: 'Missing required field: ' + field });
+    }
+  }
+  if (!body.termsAgreed) {
+    return res.status(400).json({ error: 'Terms and Conditions must be agreed to.' });
+  }
+  if (body.bringPlusOne === 'Yes') {
+    for (const field of PLUS_ONE_FIELDS) {
+      if (!body[field]) {
+        return res.status(400).json({ error: 'Missing required plus-one field: ' + field });
+      }
+    }
+  }
+
+  const bringingPlusOne = body.bringPlusOne === 'Yes';
+
+  try {
+    const pool = await getPool();
+    const request = pool.request();
+
+    request.input('eventName', sql.NVarChar(255), body.eventName);
+    request.input('name', sql.NVarChar(200), body.name);
+    request.input('phoneNumber', sql.NVarChar(20), body.phoneNumber);
+    request.input('dateOfBirth', sql.Date, body.dateOfBirth);
+    request.input('organization', sql.NVarChar(200), body.organization);
+    request.input('bringPlusOne', sql.VarChar(3), body.bringPlusOne);
+    request.input('plusOneName', sql.NVarChar(200), bringingPlusOne ? body.plusOneName : null);
+    request.input('plusOnePhoneNumber', sql.NVarChar(20), bringingPlusOne ? body.plusOnePhoneNumber : null);
+    request.input('plusOneDateOfBirth', sql.Date, bringingPlusOne ? body.plusOneDateOfBirth : null);
+    request.input('plusOneOrganization', sql.NVarChar(200), bringingPlusOne ? body.plusOneOrganization : null);
+    request.input('interest', sql.NVarChar(100), body.interest);
+    request.input('termsAgreed', sql.Bit, body.termsAgreed ? 1 : 0);
+    request.input('submittedAt', sql.DateTime2, nowInYangon());
+
+    await request.query(
+      'INSERT INTO afterwork.EventRegistrations ' +
+      '(event_name, name, phone_number, date_of_birth, organization, bring_plus_one, ' +
+      ' plus_one_name, plus_one_phone_number, plus_one_date_of_birth, plus_one_organization, ' +
+      ' interest, terms_agreed, submitted_at) ' +
+      'VALUES ' +
+      '(@eventName, @name, @phoneNumber, @dateOfBirth, @organization, @bringPlusOne, ' +
+      ' @plusOneName, @plusOnePhoneNumber, @plusOneDateOfBirth, @plusOneOrganization, ' +
+      ' @interest, @termsAgreed, @submittedAt)'
+    );
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('Synapse insert failed:', err);
+    return res.status(500).json({ error: 'Failed to save your registration. Please try again.' });
+  }
+};
