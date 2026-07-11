@@ -545,27 +545,37 @@
     document.getElementById('share-modal').classList.remove('visible');
   });
 
-  // Renders the dedicated off-screen share card (not the live poster, which has
-  // buttons/hints and a deliberately dark overlay meant for in-app viewing) to a
-  // PNG blob so guests can share a clean, bright invite image — never a link,
+  // Renders the actual live Page 5 poster to a PNG blob — same look guests
+  // see on screen — with only the Share button and screenshot hint hidden
+  // for the capture, then restored right after. Never includes a link,
   // since this invitation is private.
   function generatePosterImageBlob() {
     if (typeof html2canvas === 'undefined') {
       return Promise.reject(new Error('html2canvas not available'));
     }
-    document.getElementById('share-card-name').textContent = state.name || 'Guest';
-    var shareCard = document.getElementById('share-card');
-    return html2canvas(shareCard, { useCORS: true, backgroundColor: null, scale: 3 }).then(function (canvas) {
-      return new Promise(function (resolve, reject) {
-        canvas.toBlob(function (blob) {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error('Could not generate image'));
-          }
-        }, 'image/png');
+    var posterShell = document.querySelector('.poster-shell');
+    var shareButton = document.getElementById('btn-share');
+    var shareHint = document.querySelector('.share-hint');
+
+    shareButton.style.visibility = 'hidden';
+    shareHint.style.visibility = 'hidden';
+
+    return html2canvas(posterShell, { useCORS: true, backgroundColor: null, scale: 2 })
+      .then(function (canvas) {
+        return new Promise(function (resolve, reject) {
+          canvas.toBlob(function (blob) {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Could not generate image'));
+            }
+          }, 'image/png');
+        });
+      })
+      .finally(function () {
+        shareButton.style.visibility = '';
+        shareHint.style.visibility = '';
       });
-    });
   }
 
   async function shareToStory() {
@@ -596,29 +606,11 @@
       }
     }
 
-    showShareFallback(blob);
+    showShareFallback();
   }
 
-  function showShareFallback(blob) {
-    var modal = document.getElementById('share-modal');
-    var modalText = document.getElementById('share-modal-text');
-    var imagePreview = document.getElementById('share-image-preview');
-    var downloadLink = document.getElementById('share-download-link');
-
-    if (blob) {
-      var imageUrl = URL.createObjectURL(blob);
-      modalText.textContent = 'Your personalized invitation is ready. Save the image below and share it to your Facebook Story.';
-      imagePreview.src = imageUrl;
-      imagePreview.classList.add('visible');
-      downloadLink.href = imageUrl;
-      downloadLink.classList.add('visible');
-    } else {
-      modalText.textContent = 'Your personalized invitation is ready. Please save or screenshot this page and share it to your Facebook Story.';
-      imagePreview.classList.remove('visible');
-      downloadLink.classList.remove('visible');
-    }
-
-    modal.classList.add('visible');
+  function showShareFallback() {
+    document.getElementById('share-modal').classList.add('visible');
   }
 
   /* ---------- Init ---------- */
