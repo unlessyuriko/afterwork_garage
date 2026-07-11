@@ -559,8 +559,17 @@
 
     shareButton.style.visibility = 'hidden';
     shareHint.style.visibility = 'hidden';
+    // html2canvas under-renders text-shadow glow, making titles look flat/dim
+    // in the capture even though they glow properly on screen. Boost it only
+    // for the capture via this class, then remove it right after.
+    posterShell.classList.add('capturing');
 
-    return html2canvas(posterShell, { useCORS: true, backgroundColor: null, scale: 2 })
+    // No useCORS here: our background images are same-origin, so a normal
+    // (non-CORS-mode) fetch works. Forcing useCORS made html2canvas re-fetch
+    // them in CORS mode, which fails silently against static hosting that
+    // doesn't send CORS headers for those files — the actual cause of the
+    // washed-out/failed captures.
+    return html2canvas(posterShell, { backgroundColor: '#0d2f10', scale: 3 })
       .then(function (canvas) {
         return new Promise(function (resolve, reject) {
           canvas.toBlob(function (blob) {
@@ -575,17 +584,8 @@
       .finally(function () {
         shareButton.style.visibility = '';
         shareHint.style.visibility = '';
+        posterShell.classList.remove('capturing');
       });
-  }
-
-  // Instagram/Facebook/X Story sharing only exists as a mobile-app capability.
-  // Desktop OS share sheets (Windows Share overlay, etc.) only list whatever
-  // is registered as a desktop share target there (Mail, Teams...) and can
-  // never reach those apps' Story flows, so attempting native share on
-  // desktop just produces a confusing, non-functional dialog. Skip straight
-  // to the fallback there instead.
-  function isMobileDevice() {
-    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   }
 
   async function shareToStory() {
@@ -598,7 +598,7 @@
       console.error('Failed to generate share image:', err);
     }
 
-    if (blob && isMobileDevice()) {
+    if (blob) {
       try {
         var file = new File([blob], 'afterwork-invite.png', { type: 'image/png' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
