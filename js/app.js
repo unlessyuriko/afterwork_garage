@@ -579,7 +579,12 @@
         style.textContent =
           '*{animation:none !important;transition:none !important;}' +
           '.page,.page.active{opacity:1 !important;transform:none !important;}' +
-          '#btn-share,.share-hint{visibility:hidden !important;}';
+          '#btn-share,.share-hint{visibility:hidden !important;}' +
+          // html2canvas rasterizes text-shadow blur in device pixels, so on a
+          // high-DPR phone (times scale:3) the "AFTERWORK" glow blows out far
+          // brighter than on screen. Use a lighter, device-independent glow for
+          // the capture so the image matches what the guest actually sees.
+          '.header-branding .brand-title{text-shadow:0 0 6px rgba(70,255,130,0.28),0 0 12px rgba(60,255,120,0.22),0 2px 2px rgba(0,0,0,0.6) !important;}';
         clonedDoc.head.appendChild(style);
       }
     });
