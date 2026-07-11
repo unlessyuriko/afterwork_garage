@@ -75,7 +75,8 @@
     document.getElementById('interest-business').checked = state.interest === 'Business connections & chat';
     document.getElementById('interest-fresh').checked = state.interest === 'Fresh connections & chill';
 
-    document.getElementById('terms-checkbox').checked = !!state.termsAgreed;
+    // Terms agreement is intentionally not restored: the guest must reopen and
+    // re-view the Terms and Conditions each time before the checkbox unlocks.
   }
 
   function clearFieldError(inputEl, errorEl) {
@@ -267,11 +268,30 @@
   var interestBusiness = document.getElementById('interest-business');
   var interestFresh = document.getElementById('interest-fresh');
   var termsCheckbox = document.getElementById('terms-checkbox');
+  var termsBlock = document.getElementById('terms-block');
+  var termsHint = document.getElementById('terms-hint');
   var submitButton = document.getElementById('btn-page3-submit');
+  var hasViewedTerms = false;
+
+  function unlockTermsCheckbox() {
+    hasViewedTerms = true;
+    termsCheckbox.disabled = false;
+    termsBlock.classList.remove('is-locked');
+    termsHint.classList.add('hidden');
+  }
+
+  function lockTermsCheckbox() {
+    hasViewedTerms = false;
+    termsCheckbox.disabled = true;
+    termsCheckbox.checked = false;
+    termsBlock.classList.add('is-locked');
+    termsHint.classList.remove('hidden');
+    updateSubmitButtonState();
+  }
 
   function updateSubmitButtonState() {
     var hasInterest = interestBusiness.checked || interestFresh.checked;
-    submitButton.disabled = !(hasInterest && termsCheckbox.checked);
+    submitButton.disabled = !(hasInterest && hasViewedTerms && termsCheckbox.checked);
   }
 
   // Only one interest can be selected at a time (behaves like a single-choice selection).
@@ -295,6 +315,7 @@
   });
 
   var TERMS_VALIDATION_MSG = 'Please agree to the Terms and Conditions to continue.';
+  var TERMS_NOT_VIEWED_MSG = 'Please open and read the Terms and Conditions first.';
 
   document.getElementById('btn-page3-submit').addEventListener('click', function () {
     var banner = document.getElementById('page3-validation');
@@ -303,6 +324,12 @@
     var selectedInterest = interestBusiness.checked
       ? interestBusiness.value
       : (interestFresh.checked ? interestFresh.value : '');
+
+    if (!hasViewedTerms) {
+      banner.textContent = TERMS_NOT_VIEWED_MSG;
+      banner.classList.add('visible');
+      return;
+    }
 
     if (!selectedInterest || !termsCheckbox.checked) {
       banner.classList.add('visible');
@@ -350,6 +377,17 @@
 
   document.getElementById('btn-page4-back').addEventListener('click', function () {
     goToPage(3);
+  });
+
+  var termsPageCheckbox = document.getElementById('terms-page-checkbox');
+
+  termsPageCheckbox.addEventListener('change', function () {
+    if (termsPageCheckbox.checked) {
+      unlockTermsCheckbox();
+      goToPage(3);
+    } else {
+      lockTermsCheckbox();
+    }
   });
 
   /* ---------- Page 5 ---------- */

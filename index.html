@@ -59,7 +59,7 @@
 
       <!-- ============ PAGE 2: Registration Form ============ -->
       <section class="page" id="page-2" data-page="2">
-        <header class="header-branding">
+        <header class="header-branding header-branding--pushed">
           <h1 class="brand-title" style="font-size: clamp(1.8rem, 8vw, 2.2rem);">AFTERWORK</h1>
           <div class="brand-by-row">
             <span class="brand-by">BY</span>
@@ -94,9 +94,9 @@
             <div class="field-error-msg" id="err-org">Organization is required.</div>
           </div>
 
-          <div class="field-group">
+          <div class="field-group field-group--centered">
             <label class="field-label">Bring Your Plus One?</label>
-            <div class="choice-row">
+            <div class="choice-row choice-row--centered">
               <label class="choice-option"><input type="radio" name="plusOne" value="Yes" /> Yes</label>
               <label class="choice-option"><input type="radio" name="plusOne" value="No" /> No</label>
             </div>
@@ -159,10 +159,11 @@
             Fresh connections &amp; chill
           </label>
 
-          <label class="choice-block" style="margin-top: 18px;">
-            <input type="checkbox" id="terms-checkbox" />
+          <label class="choice-block" style="margin-top: 18px;" id="terms-block">
+            <input type="checkbox" id="terms-checkbox" disabled />
             <span>I've read and agreed with the <a href="#" id="link-terms" style="color: var(--color-green-bright); text-decoration: underline;">Terms and Conditions</a>.</span>
           </label>
+          <p class="terms-hint" id="terms-hint">Please open the Terms and Conditions link above first.</p>
         </div>
 
         <div class="button-row">
@@ -199,6 +200,11 @@
             <li>Marketing team မှ ပေးသော Burmese Terms and Conditions အပြည့်အစုံကို နောက်ပိုင်းတွင် အစားထိုးရန်။</li>
           </ul>
         </div>
+
+        <label class="choice-block" style="margin-top: 12px;">
+          <input type="checkbox" id="terms-page-checkbox" />
+          <span>I've read and agree to the Terms and Conditions.</span>
+        </label>
 
         <div class="button-row" style="justify-content: center;">
           <button class="green-button green-button--ghost" id="btn-page4-back">Back</button>

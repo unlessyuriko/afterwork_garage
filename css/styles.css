@@ -132,6 +132,10 @@ body {
   margin-bottom: 14px;
 }
 
+.header-branding--pushed {
+  margin-top: 22px;
+}
+
 .header-branding .brand-title {
   font-family: var(--font-brush);
   font-size: clamp(2.6rem, 11vw, 3.4rem);
@@ -327,6 +331,14 @@ body {
   align-items: center;
 }
 
+.choice-row--centered {
+  justify-content: center;
+}
+
+.field-group--centered {
+  text-align: center;
+}
+
 .choice-option {
   display: flex;
   align-items: center;
@@ -395,6 +407,25 @@ body {
 
 .choice-block input[type="checkbox"] {
   margin-top: 1px;
+}
+
+.choice-block input[type="checkbox"]:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.choice-block.is-locked {
+  opacity: 0.6;
+}
+
+.terms-hint {
+  font-size: 0.7rem;
+  color: rgba(255, 220, 180, 0.85);
+  margin: -4px 0 9px 4px;
+}
+
+.terms-hint.hidden {
+  display: none;
 }
 
 /* ---------- Event detail grid (Page 1) ---------- */

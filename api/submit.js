@@ -64,6 +64,18 @@ module.exports = async function handler(req, res) {
 
   try {
     const pool = await getPool();
+
+    const dupeCheck = pool.request();
+    dupeCheck.input('eventName', sql.NVarChar(255), body.eventName);
+    dupeCheck.input('phoneNumber', sql.NVarChar(20), body.phoneNumber);
+    const dupeResult = await dupeCheck.query(
+      'SELECT TOP 1 id FROM afterwork.EventRegistrations ' +
+      'WHERE event_name = @eventName AND phone_number = @phoneNumber'
+    );
+    if (dupeResult.recordset.length > 0) {
+      return res.status(409).json({ error: 'This phone number has already registered for this event.' });
+    }
+
     const request = pool.request();
 
     request.input('eventName', sql.NVarChar(255), body.eventName);
