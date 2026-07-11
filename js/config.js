@@ -2,5 +2,5 @@
 // Update this one value per event/deployment — it drives the browser tab
 // title and is saved into event_name on every registration submit.
 window.APP_CONFIG = {
-  eventTitle: 'AFTERWORK Garage'
+  eventTitle: 'AFTERWORK October'
 };

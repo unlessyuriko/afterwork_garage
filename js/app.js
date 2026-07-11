@@ -559,10 +559,6 @@
 
     shareButton.style.visibility = 'hidden';
     shareHint.style.visibility = 'hidden';
-    // html2canvas under-renders text-shadow glow, making titles look flat/dim
-    // in the capture even though they glow properly on screen. Boost it only
-    // for the capture via this class, then remove it right after.
-    posterShell.classList.add('capturing');
 
     // No useCORS here: our background images are same-origin, so a normal
     // (non-CORS-mode) fetch works. Forcing useCORS made html2canvas re-fetch
@@ -584,7 +580,6 @@
       .finally(function () {
         shareButton.style.visibility = '';
         shareHint.style.visibility = '';
-        posterShell.classList.remove('capturing');
       });
   }
 
