@@ -58,7 +58,7 @@
   function hydrateFormFromState() {
     document.getElementById('input-name').value = state.name || '';
     document.getElementById('input-phone').value = state.phoneNumber || '';
-    document.getElementById('input-dob').value = state.dateOfBirth || '';
+    dobGroup.setValue(state.dateOfBirth || '');
     document.getElementById('input-org').value = state.organization || '';
 
     var plusOneRadios = document.querySelectorAll('input[name="plusOne"]');
@@ -68,7 +68,7 @@
 
     document.getElementById('input-plusone-name').value = state.plusOneName || '';
     document.getElementById('input-plusone-phone').value = state.plusOnePhoneNumber || '';
-    document.getElementById('input-plusone-dob').value = state.plusOneDateOfBirth || '';
+    plusOneDobGroup.setValue(state.plusOneDateOfBirth || '');
     document.getElementById('input-plusone-org').value = state.plusOneOrganization || '';
     togglePlusOneFields(state.bringPlusOne === 'Yes');
 
@@ -93,10 +93,11 @@
     var container = document.getElementById('plus-one-fields');
     container.classList.toggle('visible', show);
     if (!show) {
-      ['input-plusone-name', 'input-plusone-phone', 'input-plusone-dob', 'input-plusone-org'].forEach(function (id) {
+      ['input-plusone-name', 'input-plusone-phone', 'input-plusone-org'].forEach(function (id) {
         var el = document.getElementById(id);
         clearFieldError(el, document.getElementById('err-' + id.replace('input-', '')));
       });
+      clearFieldError(document.getElementById('dob-select-row-plusone'), document.getElementById('err-plusone-dob'));
     }
   }
 
@@ -114,6 +115,102 @@
   function isValidPhone(value) {
     var digitsOnly = value.replace(/[^0-9]/g, '');
     return !!value && digitsOnly.length >= 7 && /^[0-9+\-\s]+$/.test(value);
+  }
+
+  var MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function pad2(n) {
+    return n < 10 ? '0' + n : String(n);
+  }
+
+  function populateDaySelect(select, dayCount) {
+    var currentValue = select.value;
+    while (select.options.length > 1) {
+      select.remove(1);
+    }
+    for (var d = 1; d <= dayCount; d++) {
+      var opt = document.createElement('option');
+      opt.value = pad2(d);
+      opt.textContent = pad2(d);
+      select.appendChild(opt);
+    }
+    if (currentValue && Number(currentValue) <= dayCount) {
+      select.value = currentValue;
+    }
+  }
+
+  // Wires up a Day/Month/Year select trio that scrolls natively (desktop dropdown,
+  // mobile wheel picker) instead of the fiddly native <input type="date"> calendar.
+  // Keeps a hidden input in sync so the rest of the validation code (which reads
+  // a single 'YYYY-MM-DD' value) doesn't need to change.
+  function setupDobSelectGroup(dayId, monthId, yearId, hiddenId) {
+    var daySelect = document.getElementById(dayId);
+    var monthSelect = document.getElementById(monthId);
+    var yearSelect = document.getElementById(yearId);
+    var hiddenInput = document.getElementById(hiddenId);
+
+    MONTH_NAMES.forEach(function (name, index) {
+      var opt = document.createElement('option');
+      opt.value = pad2(index + 1);
+      opt.textContent = name;
+      monthSelect.appendChild(opt);
+    });
+
+    var currentYear = new Date().getFullYear();
+    for (var y = currentYear; y >= currentYear - 100; y--) {
+      var opt = document.createElement('option');
+      opt.value = String(y);
+      opt.textContent = String(y);
+      yearSelect.appendChild(opt);
+    }
+
+    populateDaySelect(daySelect, 31);
+
+    function refreshDayCount() {
+      if (monthSelect.value && yearSelect.value) {
+        var daysInMonth = new Date(Number(yearSelect.value), Number(monthSelect.value), 0).getDate();
+        populateDaySelect(daySelect, daysInMonth);
+      } else {
+        populateDaySelect(daySelect, 31);
+      }
+    }
+
+    function syncHiddenValue() {
+      if (daySelect.value && monthSelect.value && yearSelect.value) {
+        hiddenInput.value = yearSelect.value + '-' + monthSelect.value + '-' + daySelect.value;
+      } else {
+        hiddenInput.value = '';
+      }
+      hiddenInput.dispatchEvent(new Event('change'));
+    }
+
+    daySelect.addEventListener('change', syncHiddenValue);
+    monthSelect.addEventListener('change', function () {
+      refreshDayCount();
+      syncHiddenValue();
+    });
+    yearSelect.addEventListener('change', function () {
+      refreshDayCount();
+      syncHiddenValue();
+    });
+
+    return {
+      setValue: function (isoDate) {
+        if (!isoDate) {
+          daySelect.value = '';
+          monthSelect.value = '';
+          yearSelect.value = '';
+          hiddenInput.value = '';
+          return;
+        }
+        var parts = isoDate.split('-');
+        yearSelect.value = parts[0] || '';
+        monthSelect.value = parts[1] || '';
+        refreshDayCount();
+        daySelect.value = parts[2] || '';
+        hiddenInput.value = isoDate;
+      }
+    };
   }
 
   function isAtLeast18(dobValue) {
@@ -146,18 +243,23 @@
   document.getElementById('input-phone').addEventListener('input', filterPhoneInput);
   document.getElementById('input-plusone-phone').addEventListener('input', filterPhoneInput);
 
+  var dobRow = document.getElementById('dob-select-row');
+  var plusOneDobRow = document.getElementById('dob-select-row-plusone');
+  var dobGroup = setupDobSelectGroup('dob-day', 'dob-month', 'dob-year', 'input-dob');
+  var plusOneDobGroup = setupDobSelectGroup('dob-day-plusone', 'dob-month-plusone', 'dob-year-plusone', 'input-plusone-dob');
+
   // Clear the age error as soon as a valid 18+ date is picked, without waiting for Next.
-  function watchDobForLiveClear(inputId, errorId) {
+  function watchDobForLiveClear(inputId, errorId, rowEl) {
     var input = document.getElementById(inputId);
     var error = document.getElementById(errorId);
     input.addEventListener('change', function () {
       if (input.value.trim() && isAtLeast18(input.value.trim())) {
-        clearFieldError(input, error);
+        clearFieldError(rowEl, error);
       }
     });
   }
-  watchDobForLiveClear('input-dob', 'err-dob');
-  watchDobForLiveClear('input-plusone-dob', 'err-plusone-dob');
+  watchDobForLiveClear('input-dob', 'err-dob', dobRow);
+  watchDobForLiveClear('input-plusone-dob', 'err-plusone-dob', plusOneDobRow);
 
   document.querySelectorAll('input[name="plusOne"]').forEach(function (radio) {
     radio.addEventListener('change', function () {
@@ -195,11 +297,11 @@
     [
       [nameInput, errName],
       [phoneInput, errPhone],
-      [dobInput, errDob],
+      [dobRow, errDob],
       [orgInput, errOrg],
       [plusOneNameInput, errPlusOneName],
       [plusOnePhoneInput, errPlusOnePhone],
-      [plusOneDobInput, errPlusOneDob],
+      [plusOneDobRow, errPlusOneDob],
       [plusOneOrgInput, errPlusOneOrg]
     ].forEach(function (pair) {
       clearFieldError(pair[0], pair[1]);
@@ -224,11 +326,11 @@
     var dobValue = dobInput.value.trim();
     if (!dobValue) {
       errDob.textContent = 'Date of Birth is required.';
-      showFieldError(dobInput, errDob);
+      showFieldError(dobRow, errDob);
       isValid = false;
     } else if (!isAtLeast18(dobValue)) {
       errDob.textContent = 'You must be at least 18 years old to register.';
-      showFieldError(dobInput, errDob);
+      showFieldError(dobRow, errDob);
       isValid = false;
     }
     if (!orgInput.value.trim()) {
@@ -260,11 +362,11 @@
       var plusOneDobValue = plusOneDobInput.value.trim();
       if (!plusOneDobValue) {
         errPlusOneDob.textContent = "Plus One's Date of Birth is required.";
-        showFieldError(plusOneDobInput, errPlusOneDob);
+        showFieldError(plusOneDobRow, errPlusOneDob);
         isValid = false;
       } else if (!isAtLeast18(plusOneDobValue)) {
         errPlusOneDob.textContent = 'Plus One must be at least 18 years old.';
-        showFieldError(plusOneDobInput, errPlusOneDob);
+        showFieldError(plusOneDobRow, errPlusOneDob);
         isValid = false;
       }
       if (!plusOneOrgInput.value.trim()) {
@@ -443,25 +545,77 @@
     document.getElementById('share-modal').classList.remove('visible');
   });
 
-  function shareToStory() {
-    var shareText = "I'm officially on the A-list for Afterwork by Heineken.";
-    var shareUrl = window.location.href;
-
-    if (navigator.share) {
-      navigator.share({
-        title: 'AFTERWORK by Heineken',
-        text: shareText,
-        url: shareUrl
-      }).catch(function () {
-        showShareFallback();
-      });
-    } else {
-      showShareFallback();
+  // Renders the poster (not just the message div) to a PNG blob so guests can
+  // share the actual invite image — never a link, since this invitation is private.
+  function generatePosterImageBlob() {
+    if (typeof html2canvas === 'undefined') {
+      return Promise.reject(new Error('html2canvas not available'));
     }
+    var posterShell = document.querySelector('.poster-shell');
+    return html2canvas(posterShell, { useCORS: true, backgroundColor: null, scale: 2 }).then(function (canvas) {
+      return new Promise(function (resolve, reject) {
+        canvas.toBlob(function (blob) {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Could not generate image'));
+          }
+        }, 'image/png');
+      });
+    });
   }
 
-  function showShareFallback() {
-    document.getElementById('share-modal').classList.add('visible');
+  async function shareToStory() {
+    var shareText = "I'm officially on the A-list for Afterwork by Heineken.";
+    var blob = null;
+
+    try {
+      blob = await generatePosterImageBlob();
+    } catch (err) {
+      console.error('Failed to generate share image:', err);
+    }
+
+    if (blob) {
+      try {
+        var file = new File([blob], 'afterwork-invite.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'AFTERWORK by Heineken',
+            text: shareText
+          });
+          return;
+        }
+      } catch (err) {
+        if (err && err.name === 'AbortError') {
+          return;
+        }
+      }
+    }
+
+    showShareFallback(blob);
+  }
+
+  function showShareFallback(blob) {
+    var modal = document.getElementById('share-modal');
+    var modalText = document.getElementById('share-modal-text');
+    var imagePreview = document.getElementById('share-image-preview');
+    var downloadLink = document.getElementById('share-download-link');
+
+    if (blob) {
+      var imageUrl = URL.createObjectURL(blob);
+      modalText.textContent = 'Your personalized invitation is ready. Save the image below and share it to your Facebook Story.';
+      imagePreview.src = imageUrl;
+      imagePreview.classList.add('visible');
+      downloadLink.href = imageUrl;
+      downloadLink.classList.add('visible');
+    } else {
+      modalText.textContent = 'Your personalized invitation is ready. Please save or screenshot this page and share it to your Facebook Story.';
+      imagePreview.classList.remove('visible');
+      downloadLink.classList.remove('visible');
+    }
+
+    modal.classList.add('visible');
   }
 
   /* ---------- Init ---------- */

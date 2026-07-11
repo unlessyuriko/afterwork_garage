@@ -83,8 +83,22 @@
           </div>
 
           <div class="field-group">
-            <label class="field-label" for="input-dob">Date of Birth</label>
-            <input class="glass-input" type="date" id="input-dob" />
+            <label class="field-label">Date of Birth</label>
+            <div class="dob-select-row" id="dob-select-row">
+              <div class="dob-select-wrap">
+                <select class="glass-input dob-select" id="dob-day" aria-label="Day"><option value="">DD</option></select>
+                <span class="dob-select-arrow">&#9662;</span>
+              </div>
+              <div class="dob-select-wrap">
+                <select class="glass-input dob-select" id="dob-month" aria-label="Month"><option value="">MM</option></select>
+                <span class="dob-select-arrow">&#9662;</span>
+              </div>
+              <div class="dob-select-wrap">
+                <select class="glass-input dob-select" id="dob-year" aria-label="Year"><option value="">YYYY</option></select>
+                <span class="dob-select-arrow">&#9662;</span>
+              </div>
+            </div>
+            <input type="hidden" id="input-dob" />
             <div class="field-error-msg" id="err-dob">Date of Birth is required.</div>
           </div>
 
@@ -116,8 +130,22 @@
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="input-plusone-dob">Plus One's Date of Birth</label>
-              <input class="glass-input" type="date" id="input-plusone-dob" />
+              <label class="field-label">Plus One's Date of Birth</label>
+              <div class="dob-select-row" id="dob-select-row-plusone">
+                <div class="dob-select-wrap">
+                  <select class="glass-input dob-select" id="dob-day-plusone" aria-label="Day"><option value="">DD</option></select>
+                  <span class="dob-select-arrow">&#9662;</span>
+                </div>
+                <div class="dob-select-wrap">
+                  <select class="glass-input dob-select" id="dob-month-plusone" aria-label="Month"><option value="">MM</option></select>
+                  <span class="dob-select-arrow">&#9662;</span>
+                </div>
+                <div class="dob-select-wrap">
+                  <select class="glass-input dob-select" id="dob-year-plusone" aria-label="Year"><option value="">YYYY</option></select>
+                  <span class="dob-select-arrow">&#9662;</span>
+                </div>
+              </div>
+              <input type="hidden" id="input-plusone-dob" />
               <div class="field-error-msg" id="err-plusone-dob">Plus One's Date of Birth is required.</div>
             </div>
 
@@ -250,11 +278,16 @@
 <!-- Share fallback modal -->
 <div class="modal-overlay" id="share-modal">
   <div class="modal-box">
-    <p>Your personalized invitation is ready. Please save or screenshot this page and share it to your Facebook Story.</p>
-    <button class="green-button green-button--small" id="btn-modal-close">Got it</button>
+    <p id="share-modal-text">Your personalized invitation is ready. Please save or screenshot this page and share it to your Facebook Story.</p>
+    <img id="share-image-preview" alt="Your personalized invitation" />
+    <div class="modal-actions">
+      <a id="share-download-link" class="green-button green-button--small" download="afterwork-invite.png">Download Image</a>
+      <button class="green-button green-button--ghost green-button--small" id="btn-modal-close">Got it</button>
+    </div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 </body>
