@@ -578,6 +578,16 @@
       });
   }
 
+  // Instagram/Facebook/X Story sharing only exists as a mobile-app capability.
+  // Desktop OS share sheets (Windows Share overlay, etc.) only list whatever
+  // is registered as a desktop share target there (Mail, Teams...) and can
+  // never reach those apps' Story flows, so attempting native share on
+  // desktop just produces a confusing, non-functional dialog. Skip straight
+  // to the fallback there instead.
+  function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  }
+
   async function shareToStory() {
     var shareText = "I'm officially on the A-list for Afterwork by Heineken.";
     var blob = null;
@@ -588,7 +598,7 @@
       console.error('Failed to generate share image:', err);
     }
 
-    if (blob) {
+    if (blob && isMobileDevice()) {
       try {
         var file = new File([blob], 'afterwork-invite.png', { type: 'image/png' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
