@@ -102,6 +102,13 @@
     if (typeof page2ScrollUpdate === 'function') {
       page2ScrollUpdate();
     }
+    // With "No" (or nothing) selected, the base fields fit the card without
+    // scrolling — force the indicator hidden regardless of measurement, so
+    // it only ever appears once the Plus One fields actually add overflow.
+    var page2Indicator = document.getElementById('page2-scroll-indicator');
+    if (page2Indicator && !show) {
+      page2Indicator.classList.add('hidden');
+    }
   }
 
   // Drives a custom track+thumb scroll indicator next to a .form-scroll,
