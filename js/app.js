@@ -519,7 +519,7 @@
 
   async function submitRegistration(banner) {
     submitButton.disabled = true;
-    var originalLabel = submitButton.textContent;
+    var originalContent = submitButton.innerHTML;
     submitButton.textContent = 'Submitting...';
 
     try {
@@ -540,7 +540,7 @@
       banner.textContent = err.message || 'Something went wrong. Please try again.';
       banner.classList.add('visible');
     } finally {
-      submitButton.textContent = originalLabel;
+      submitButton.innerHTML = originalContent;
       updateSubmitButtonState();
     }
   }

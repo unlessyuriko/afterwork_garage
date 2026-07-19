@@ -87,7 +87,7 @@ When `bringPlusOne === 'Yes'`, the five `plusOne*` fields are also required.
 - Email format validation for attendee and plus one.
 - 18+ age validation for attendee and plus one.
 - Plus one's phone must differ from the attendee's.
-- **Duplicate guard:** rejects (HTTP 409) if either phone number already registered for the same
+- **Duplicate guard:** rejects (HTTP 409) if either email address already registered for the same
   `eventName`.
 - `submitted_at` is stored as **Yangon local time** (UTC+6:30), computed by offsetting the epoch so
   the driver's UTC getters read Yangon wall-clock time.

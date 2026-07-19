@@ -99,18 +99,18 @@ module.exports = async function handler(req, res) {
 
     const dupeCheck = pool.request();
     dupeCheck.input('eventName', sql.NVarChar(255), body.eventName);
-    dupeCheck.input('phoneNumber', sql.NVarChar(20), body.phoneNumber);
-    dupeCheck.input('plusOnePhoneNumber', sql.NVarChar(20), bringingPlusOne ? body.plusOnePhoneNumber : null);
+    dupeCheck.input('email', sql.NVarChar(200), body.email);
+    dupeCheck.input('plusOneEmail', sql.NVarChar(200), bringingPlusOne ? body.plusOneEmail : null);
     const dupeResult = await dupeCheck.query(
       'SELECT TOP 1 id FROM afterwork.EventRegistrations ' +
       'WHERE event_name = @eventName AND (' +
-      '  phone_number = @phoneNumber OR plus_one_phone_number = @phoneNumber' +
-      '  OR (@plusOnePhoneNumber IS NOT NULL AND phone_number = @plusOnePhoneNumber)' +
-      '  OR (@plusOnePhoneNumber IS NOT NULL AND plus_one_phone_number = @plusOnePhoneNumber)' +
+      '  mail = @email OR plus_one_mail = @email' +
+      '  OR (@plusOneEmail IS NOT NULL AND mail = @plusOneEmail)' +
+      '  OR (@plusOneEmail IS NOT NULL AND plus_one_mail = @plusOneEmail)' +
       ')'
     );
     if (dupeResult.recordset.length > 0) {
-      return res.status(409).json({ error: 'One or both phone numbers have already registered for this event.' });
+      return res.status(409).json({ error: 'One or both email addresses have already registered for this event.' });
     }
 
     const request = pool.request();
