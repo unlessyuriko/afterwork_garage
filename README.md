@@ -54,15 +54,17 @@ All five "pages" live in `index.html` as `<section class="page">` blocks. `js/ap
 `.active` class to show one at a time — it is a client-side wizard, not multiple URLs.
 
 1. **Landing invitation** — event details and a *Register Now* button.
-2. **Registration form** — Name, Phone, Date of Birth (Day/Month/Year selects), Organization,
+2. **Registration form** — Name, Mail, Phone, Date of Birth (Day/Month/Year selects), Organization,
    and an optional **Plus One** (with the same fields). Validated client-side:
    - required fields,
+   - email format,
    - phone format (digits/`+`/`-`/spaces, ≥ 7 digits),
    - **18+ age check** for both attendee and plus one,
    - plus one's phone must differ from the attendee's.
 3. **Interest selection & agreement** — pick one interest (*Business connections & chat* or
    *Fresh connections & chill*). The Terms checkbox stays **locked** until the guest opens page 4.
-4. **Terms & Conditions** — checking the box here unlocks the agreement on page 3 and returns there.
+4. **Terms & Conditions** — just the T&C text and a *Back* button. Opening this page unlocks the
+   agreement checkbox on page 3; the guest still has to tick it themselves after returning.
    (The T&C text is currently Burmese placeholder copy to be replaced by the marketing team.)
 5. **Personalized success page** — "You're officially on the A-list!" with a *Share to your story*
    button that renders the live poster to a PNG (via html2canvas) and uses the Web Share API,
@@ -77,11 +79,12 @@ intentionally **not** restored — guests must re-view the T&C each visit).
 
 Accepts a JSON body and inserts one row into `afterwork.EventRegistrations`.
 
-**Required fields:** `eventName`, `name`, `phoneNumber`, `dateOfBirth`, `organization`,
+**Required fields:** `eventName`, `name`, `email`, `phoneNumber`, `dateOfBirth`, `organization`,
 `bringPlusOne`, `interest`, plus `termsAgreed` must be truthy.
-When `bringPlusOne === 'Yes'`, the four `plusOne*` fields are also required.
+When `bringPlusOne === 'Yes'`, the five `plusOne*` fields are also required.
 
 **Server-side rules (mirroring the client):**
+- Email format validation for attendee and plus one.
 - 18+ age validation for attendee and plus one.
 - Plus one's phone must differ from the attendee's.
 - **Duplicate guard:** rejects (HTTP 409) if either phone number already registered for the same
@@ -131,6 +134,9 @@ Run [`db/setup.sql`](db/setup.sql) in Synapse Studio (as an Azure AD admin). It:
 2. Creates a login for the app registration in the `master` database *(commented — uncomment and
    fill in your app registration's display name)*.
 3. Creates a mapped user in the pool DB and grants it `INSERT` on the table *(commented)*.
+
+If you already have this table deployed without the `mail`/`plus_one_mail` columns, use the
+`ALTER TABLE` migration at the bottom of `db/setup.sql` instead of re-running the `CREATE TABLE`.
 
 ---
 

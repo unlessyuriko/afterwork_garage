@@ -1,7 +1,8 @@
 const sql = require('mssql');
 
-const REQUIRED_FIELDS = ['eventName', 'name', 'phoneNumber', 'dateOfBirth', 'organization', 'bringPlusOne', 'interest'];
-const PLUS_ONE_FIELDS = ['plusOneName', 'plusOnePhoneNumber', 'plusOneDateOfBirth', 'plusOneOrganization'];
+const REQUIRED_FIELDS = ['eventName', 'name', 'email', 'phoneNumber', 'dateOfBirth', 'organization', 'bringPlusOne', 'interest'];
+const PLUS_ONE_FIELDS = ['plusOneName', 'plusOneEmail', 'plusOnePhoneNumber', 'plusOneDateOfBirth', 'plusOneOrganization'];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const YANGON_OFFSET_MINUTES = 6 * 60 + 30;
 
 let poolPromise;
@@ -66,6 +67,9 @@ module.exports = async function handler(req, res) {
   if (!body.termsAgreed) {
     return res.status(400).json({ error: 'Terms and Conditions must be agreed to.' });
   }
+  if (!EMAIL_REGEX.test(body.email)) {
+    return res.status(400).json({ error: 'Please enter a valid email address.' });
+  }
   if (!isAtLeast18(body.dateOfBirth)) {
     return res.status(400).json({ error: 'You must be at least 18 years old to register.' });
   }
@@ -74,6 +78,9 @@ module.exports = async function handler(req, res) {
       if (!body[field]) {
         return res.status(400).json({ error: 'Missing required plus-one field: ' + field });
       }
+    }
+    if (!EMAIL_REGEX.test(body.plusOneEmail)) {
+      return res.status(400).json({ error: "Please enter a valid email address for Plus One." });
     }
     if (!isAtLeast18(body.plusOneDateOfBirth)) {
       return res.status(400).json({ error: 'Plus One must be at least 18 years old.' });
@@ -110,11 +117,13 @@ module.exports = async function handler(req, res) {
 
     request.input('eventName', sql.NVarChar(255), body.eventName);
     request.input('name', sql.NVarChar(200), body.name);
+    request.input('email', sql.NVarChar(200), body.email);
     request.input('phoneNumber', sql.NVarChar(20), body.phoneNumber);
     request.input('dateOfBirth', sql.Date, body.dateOfBirth);
     request.input('organization', sql.NVarChar(200), body.organization);
     request.input('bringPlusOne', sql.VarChar(3), body.bringPlusOne);
     request.input('plusOneName', sql.NVarChar(200), bringingPlusOne ? body.plusOneName : null);
+    request.input('plusOneEmail', sql.NVarChar(200), bringingPlusOne ? body.plusOneEmail : null);
     request.input('plusOnePhoneNumber', sql.NVarChar(20), bringingPlusOne ? body.plusOnePhoneNumber : null);
     request.input('plusOneDateOfBirth', sql.Date, bringingPlusOne ? body.plusOneDateOfBirth : null);
     request.input('plusOneOrganization', sql.NVarChar(200), bringingPlusOne ? body.plusOneOrganization : null);
@@ -124,12 +133,12 @@ module.exports = async function handler(req, res) {
 
     await request.query(
       'INSERT INTO afterwork.EventRegistrations ' +
-      '(event_name, name, phone_number, date_of_birth, organization, bring_plus_one, ' +
-      ' plus_one_name, plus_one_phone_number, plus_one_date_of_birth, plus_one_organization, ' +
+      '(event_name, name, mail, phone_number, date_of_birth, organization, bring_plus_one, ' +
+      ' plus_one_name, plus_one_mail, plus_one_phone_number, plus_one_date_of_birth, plus_one_organization, ' +
       ' interest, terms_agreed, submitted_at) ' +
       'VALUES ' +
-      '(@eventName, @name, @phoneNumber, @dateOfBirth, @organization, @bringPlusOne, ' +
-      ' @plusOneName, @plusOnePhoneNumber, @plusOneDateOfBirth, @plusOneOrganization, ' +
+      '(@eventName, @name, @email, @phoneNumber, @dateOfBirth, @organization, @bringPlusOne, ' +
+      ' @plusOneName, @plusOneEmail, @plusOnePhoneNumber, @plusOneDateOfBirth, @plusOneOrganization, ' +
       ' @interest, @termsAgreed, @submittedAt)'
     );
 

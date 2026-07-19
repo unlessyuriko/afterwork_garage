@@ -2,7 +2,69 @@
    AFTERWORK by Heineken — Design System
    =========================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Roboto+Slab:wght@400;500;600;700&display=swap');
+@font-face {
+  font-family: 'HEINEKENCore';
+  src: url('../font/HEINEKENCore-Thin.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'HEINEKENCore';
+  src: url('../font/HEINEKENCore-ThinItalic.otf') format('opentype');
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'HEINEKENCore';
+  src: url('../font/HEINEKENCore-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'HEINEKENCore';
+  src: url('../font/HEINEKENCore-LightItalic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'HEINEKENCore';
+  src: url('../font/HEINEKENCore.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'HEINEKENCore';
+  src: url('../font/HEINEKENCore-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'HEINEKENCore';
+  src: url('../font/HEINEKENCore-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'HEINEKENCore';
+  src: url('../font/HEINEKENCore-BoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'HEINEKENCore';
+  src: url('../font/HEINEKENCore-ExtraBold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --color-bg-page: #0d2f10;
@@ -22,8 +84,8 @@
   --poster-height-min: 610px;
   --poster-height-max: 700px;
 
-  --font-brush: 'Permanent Marker', cursive;
-  --font-body: 'Roboto Slab', 'Georgia', serif;
+  --font-brush: 'HEINEKENCore', sans-serif;
+  --font-body: 'HEINEKENCore', 'Georgia', serif;
 }
 
 * {
@@ -74,22 +136,11 @@ body {
   background-image:
     linear-gradient(180deg, var(--color-overlay-top) 0%, rgba(0, 45, 10, 0.45) 40%, var(--color-overlay-bottom) 100%),
     radial-gradient(ellipse at center, rgba(60, 255, 120, 0.12) 0%, rgba(0, 0, 0, 0) 55%),
-    var(--poster-bg-image, url('../assets/background-afterwork.jpg'));
+    url('../assets/Background.png');
   background-size: cover;
   background-position: center;
   display: flex;
   flex-direction: column;
-  transition: background-image 0.25s ease;
-}
-
-/* Page 1 (landing) and Pages 2-5 (body/flow) can use different background photos.
-   Replace either file in /assets to change that section's look without touching layout. */
-.poster-shell.bg-landing {
-  --poster-bg-image: url('../assets/background-landing.jpg');
-}
-
-.poster-shell.bg-body {
-  --poster-bg-image: url('../assets/background-body.jpg');
 }
 
 /* vignette */
@@ -136,50 +187,17 @@ body {
   margin-top: 22px;
 }
 
-.header-branding .brand-title {
-  font-family: var(--font-brush);
-  font-size: clamp(2.6rem, 11vw, 3.4rem);
-  line-height: 1;
-  color: var(--color-white);
-  text-shadow:
-    0 0 8px var(--color-green-glow),
-    0 0 22px rgba(60, 255, 120, 0.45),
-    0 2px 2px rgba(0, 0, 0, 0.6);
-  letter-spacing: 1px;
-  margin: 0;
+.brand-logo {
+  width: 260px;
+  max-width: 78%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  filter: drop-shadow(0 0 10px rgba(70, 255, 130, 0.3)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
-.header-branding .brand-by-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.header-branding .brand-by {
-  font-family: var(--font-body);
-  font-size: 0.7rem;
-  letter-spacing: 3px;
-  color: rgba(245, 255, 246, 0.85);
-  font-weight: 400;
-}
-
-.heineken-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--color-white);
-  letter-spacing: 0.5px;
-}
-
-.heineken-badge .star {
-  color: var(--color-red-star);
-  font-size: 0.85rem;
-  filter: drop-shadow(0 0 4px rgba(216, 31, 38, 0.8));
+.brand-logo--small {
+  width: 190px;
 }
 
 /* ---------- GreenButton ---------- */
@@ -480,12 +498,11 @@ body {
 }
 
 .event-detail-item .icon {
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   margin-top: 1px;
-  stroke: var(--color-green-bright);
-  filter: drop-shadow(0 0 3px rgba(70, 255, 130, 0.6));
+  filter: drop-shadow(0 0 3px rgba(70, 255, 130, 0.4));
 }
 
 /* ---------- Invitation text ---------- */
@@ -515,39 +532,12 @@ body {
   padding-top: 14px;
 }
 
-.collab-footer .collab-line {
-  font-size: 0.68rem;
-  color: rgba(245, 255, 246, 0.75);
-  margin-bottom: 2px;
-}
-
-.collab-footer .collab-logos {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin: 6px 0 8px;
-  flex-wrap: wrap;
-}
-
-.placeholder-logo {
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 0.68rem;
-  letter-spacing: 1px;
-  color: var(--color-white);
-  border: 1px solid rgba(220, 255, 220, 0.4);
-  border-radius: 6px;
-  padding: 4px 8px;
-  background: rgba(20, 40, 25, 0.35);
-  white-space: nowrap;
-}
-
-.collab-footer .tagline {
-  font-family: var(--font-brush);
-  font-size: 0.95rem;
-  color: var(--color-white);
-  text-shadow: 0 0 8px rgba(70, 255, 130, 0.4);
+.collab-footer-image {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  margin: 0 auto;
+  display: block;
 }
 
 /* ---------- Page container helper ---------- */
@@ -626,6 +616,7 @@ body {
 
 .success-message .a-list {
   font-family: var(--font-brush);
+  font-weight: 800;
   font-size: 1.6rem;
   line-height: 1.25;
   color: var(--color-white);

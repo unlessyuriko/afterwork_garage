@@ -6,11 +6,13 @@
 
   var state = {
     name: '',
+    email: '',
     phoneNumber: '',
     dateOfBirth: '',
     organization: '',
     bringPlusOne: '',
     plusOneName: '',
+    plusOneEmail: '',
     plusOnePhoneNumber: '',
     plusOneDateOfBirth: '',
     plusOneOrganization: '',
@@ -48,15 +50,12 @@
       target.classList.add('active');
     }
 
-    var posterShell = document.querySelector('.poster-shell');
-    posterShell.classList.remove('bg-landing', 'bg-body');
-    posterShell.classList.add(pageNumber === 1 ? 'bg-landing' : 'bg-body');
-
     window.scrollTo(0, 0);
   }
 
   function hydrateFormFromState() {
     document.getElementById('input-name').value = state.name || '';
+    document.getElementById('input-email').value = state.email || '';
     document.getElementById('input-phone').value = state.phoneNumber || '';
     dobGroup.setValue(state.dateOfBirth || '');
     document.getElementById('input-org').value = state.organization || '';
@@ -67,6 +66,7 @@
     });
 
     document.getElementById('input-plusone-name').value = state.plusOneName || '';
+    document.getElementById('input-plusone-email').value = state.plusOneEmail || '';
     document.getElementById('input-plusone-phone').value = state.plusOnePhoneNumber || '';
     plusOneDobGroup.setValue(state.plusOneDateOfBirth || '');
     document.getElementById('input-plusone-org').value = state.plusOneOrganization || '';
@@ -93,7 +93,7 @@
     var container = document.getElementById('plus-one-fields');
     container.classList.toggle('visible', show);
     if (!show) {
-      ['input-plusone-name', 'input-plusone-phone', 'input-plusone-org'].forEach(function (id) {
+      ['input-plusone-name', 'input-plusone-email', 'input-plusone-phone', 'input-plusone-org'].forEach(function (id) {
         var el = document.getElementById(id);
         clearFieldError(el, document.getElementById('err-' + id.replace('input-', '')));
       });
@@ -115,6 +115,10 @@
   function isValidPhone(value) {
     var digitsOnly = value.replace(/[^0-9]/g, '');
     return !!value && digitsOnly.length >= 7 && /^[0-9+\-\s]+$/.test(value);
+  }
+
+  function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
 
   var MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -269,11 +273,13 @@
 
   document.getElementById('btn-page2-next').addEventListener('click', function () {
     var nameInput = document.getElementById('input-name');
+    var emailInput = document.getElementById('input-email');
     var phoneInput = document.getElementById('input-phone');
     var dobInput = document.getElementById('input-dob');
     var orgInput = document.getElementById('input-org');
 
     var errName = document.getElementById('err-name');
+    var errEmail = document.getElementById('err-email');
     var errPhone = document.getElementById('err-phone');
     var errDob = document.getElementById('err-dob');
     var errOrg = document.getElementById('err-org');
@@ -283,11 +289,13 @@
     var bringingPlusOne = checkedPlusOne && checkedPlusOne.value === 'Yes';
 
     var plusOneNameInput = document.getElementById('input-plusone-name');
+    var plusOneEmailInput = document.getElementById('input-plusone-email');
     var plusOnePhoneInput = document.getElementById('input-plusone-phone');
     var plusOneDobInput = document.getElementById('input-plusone-dob');
     var plusOneOrgInput = document.getElementById('input-plusone-org');
 
     var errPlusOneName = document.getElementById('err-plusone-name');
+    var errPlusOneEmail = document.getElementById('err-plusone-email');
     var errPlusOnePhone = document.getElementById('err-plusone-phone');
     var errPlusOneDob = document.getElementById('err-plusone-dob');
     var errPlusOneOrg = document.getElementById('err-plusone-org');
@@ -296,10 +304,12 @@
 
     [
       [nameInput, errName],
+      [emailInput, errEmail],
       [phoneInput, errPhone],
       [dobRow, errDob],
       [orgInput, errOrg],
       [plusOneNameInput, errPlusOneName],
+      [plusOneEmailInput, errPlusOneEmail],
       [plusOnePhoneInput, errPlusOnePhone],
       [plusOneDobRow, errPlusOneDob],
       [plusOneOrgInput, errPlusOneOrg]
@@ -309,6 +319,17 @@
 
     if (!nameInput.value.trim()) {
       showFieldError(nameInput, errName);
+      isValid = false;
+    }
+
+    var emailValue = emailInput.value.trim();
+    if (!emailValue) {
+      errEmail.textContent = 'Mail is required.';
+      showFieldError(emailInput, errEmail);
+      isValid = false;
+    } else if (!isValidEmail(emailValue)) {
+      errEmail.textContent = 'Please enter a valid email address.';
+      showFieldError(emailInput, errEmail);
       isValid = false;
     }
 
@@ -341,6 +362,17 @@
     if (bringingPlusOne) {
       if (!plusOneNameInput.value.trim()) {
         showFieldError(plusOneNameInput, errPlusOneName);
+        isValid = false;
+      }
+
+      var plusOneEmailValue = plusOneEmailInput.value.trim();
+      if (!plusOneEmailValue) {
+        errPlusOneEmail.textContent = "Plus One's Mail is required.";
+        showFieldError(plusOneEmailInput, errPlusOneEmail);
+        isValid = false;
+      } else if (!isValidEmail(plusOneEmailValue)) {
+        errPlusOneEmail.textContent = 'Please enter a valid email address.';
+        showFieldError(plusOneEmailInput, errPlusOneEmail);
         isValid = false;
       }
 
@@ -383,6 +415,7 @@
     banner.classList.remove('visible');
 
     state.name = nameInput.value.trim();
+    state.email = emailInput.value.trim();
     state.phoneNumber = phoneInput.value.trim();
     state.dateOfBirth = dobInput.value.trim();
     state.organization = orgInput.value.trim();
@@ -390,11 +423,13 @@
 
     if (bringingPlusOne) {
       state.plusOneName = plusOneNameInput.value.trim();
+      state.plusOneEmail = plusOneEmailInput.value.trim();
       state.plusOnePhoneNumber = plusOnePhoneInput.value.trim();
       state.plusOneDateOfBirth = plusOneDobInput.value.trim();
       state.plusOneOrganization = plusOneOrgInput.value.trim();
     } else {
       state.plusOneName = '';
+      state.plusOneEmail = '';
       state.plusOnePhoneNumber = '';
       state.plusOneDateOfBirth = '';
       state.plusOneOrganization = '';
@@ -425,15 +460,6 @@
     termsHint.classList.add('hidden');
   }
 
-  function lockTermsCheckbox() {
-    hasViewedTerms = false;
-    termsCheckbox.disabled = true;
-    termsCheckbox.checked = false;
-    termsBlock.classList.add('is-locked');
-    termsHint.classList.remove('hidden');
-    updateSubmitButtonState();
-  }
-
   function updateSubmitButtonState() {
     var hasInterest = interestBusiness.checked || interestFresh.checked;
     submitButton.disabled = !(hasInterest && hasViewedTerms && termsCheckbox.checked);
@@ -456,6 +482,7 @@
 
   document.getElementById('link-terms').addEventListener('click', function (e) {
     e.preventDefault();
+    unlockTermsCheckbox();
     goToPage(4);
   });
 
@@ -524,17 +551,6 @@
     goToPage(3);
   });
 
-  var termsPageCheckbox = document.getElementById('terms-page-checkbox');
-
-  termsPageCheckbox.addEventListener('change', function () {
-    if (termsPageCheckbox.checked) {
-      unlockTermsCheckbox();
-      goToPage(3);
-    } else {
-      lockTermsCheckbox();
-    }
-  });
-
   /* ---------- Page 5 ---------- */
 
   document.getElementById('btn-share').addEventListener('click', function () {
@@ -579,12 +595,7 @@
         style.textContent =
           '*{animation:none !important;transition:none !important;}' +
           '.page,.page.active{opacity:1 !important;transform:none !important;}' +
-          '#btn-share,.share-hint{visibility:hidden !important;}' +
-          // html2canvas rasterizes text-shadow blur in device pixels, so on a
-          // high-DPR phone (times scale:3) the "AFTERWORK" glow blows out far
-          // brighter than on screen. Use a lighter, device-independent glow for
-          // the capture so the image matches what the guest actually sees.
-          '.header-branding .brand-title{text-shadow:0 0 6px rgba(70,255,130,0.28),0 0 12px rgba(60,255,120,0.22),0 2px 2px rgba(0,0,0,0.6) !important;}';
+          '#btn-share,.share-hint{visibility:hidden !important;}';
         clonedDoc.head.appendChild(style);
       }
     });
@@ -701,5 +712,4 @@
   loadState();
   hydrateFormFromState();
   updateSubmitButtonState();
-  document.querySelector('.poster-shell').classList.add('bg-landing');
 })();

@@ -19,6 +19,7 @@ CREATE TABLE afterwork.EventRegistrations
 
     -- Main attendee
     name                   NVARCHAR(200) NOT NULL,
+    mail                   NVARCHAR(200) NOT NULL,
     phone_number           NVARCHAR(20) NOT NULL,
     date_of_birth          DATE NOT NULL,
     organization           NVARCHAR(200) NOT NULL,
@@ -26,6 +27,7 @@ CREATE TABLE afterwork.EventRegistrations
     -- Plus one information
     bring_plus_one         VARCHAR(3) NOT NULL,
     plus_one_name          NVARCHAR(200) NULL,
+    plus_one_mail          NVARCHAR(200) NULL,
     plus_one_phone_number  NVARCHAR(20) NULL,
     plus_one_date_of_birth DATE NULL,
     plus_one_organization  NVARCHAR(200) NULL,
@@ -55,3 +57,15 @@ GO
 --    mapped to that login, and grant it INSERT rights on the table.
 -- CREATE USER [your-app-registration-display-name] FOR LOGIN [your-app-registration-display-name];
 -- GRANT INSERT ON afterwork.EventRegistrations TO [your-app-registration-display-name];
+
+-- ============================================================
+-- Migration: adding the "Mail" field to a table that already exists
+-- in production (skip this if you're running the CREATE TABLE above
+-- fresh — it already includes these columns).
+--
+-- Added as NULLable since existing rows have no value for them. If you
+-- want them NOT NULL going forward, backfill existing rows first, then
+-- run: ALTER TABLE afterwork.EventRegistrations ALTER COLUMN mail NVARCHAR(200) NOT NULL;
+-- ============================================================
+-- ALTER TABLE afterwork.EventRegistrations ADD mail NVARCHAR(200) NULL;
+-- ALTER TABLE afterwork.EventRegistrations ADD plus_one_mail NVARCHAR(200) NULL;
