@@ -99,6 +99,39 @@
       });
       clearFieldError(document.getElementById('dob-select-row-plusone'), document.getElementById('err-plusone-dob'));
     }
+    if (typeof page2ScrollUpdate === 'function') {
+      page2ScrollUpdate();
+    }
+  }
+
+  // Drives a custom track+thumb scroll indicator next to a .form-scroll,
+  // since mobile browsers generally hide native scrollbars regardless of CSS
+  // styling. Returns an update() function to call whenever the scrollable
+  // content's height changes (e.g. the Plus One fields appearing).
+  function setupScrollIndicator(scrollEl, indicatorEl) {
+    var thumb = indicatorEl.querySelector('.scroll-thumb');
+
+    function update() {
+      var scrollHeight = scrollEl.scrollHeight;
+      var clientHeight = scrollEl.clientHeight;
+      if (scrollHeight <= clientHeight + 1) {
+        indicatorEl.classList.add('hidden');
+        return;
+      }
+      indicatorEl.classList.remove('hidden');
+      var trackHeight = indicatorEl.clientHeight;
+      var thumbHeight = Math.max(trackHeight * (clientHeight / scrollHeight), 24);
+      var maxThumbTop = trackHeight - thumbHeight;
+      var scrollableDistance = scrollHeight - clientHeight;
+      var scrollRatio = scrollableDistance > 0 ? scrollEl.scrollTop / scrollableDistance : 0;
+      thumb.style.height = thumbHeight + 'px';
+      thumb.style.top = (maxThumbTop * scrollRatio) + 'px';
+    }
+
+    scrollEl.addEventListener('scroll', update);
+    window.addEventListener('resize', update);
+    update();
+    return update;
   }
 
   function filterPhoneInput(e) {
@@ -251,6 +284,10 @@
   var plusOneDobRow = document.getElementById('dob-select-row-plusone');
   var dobGroup = setupDobSelectGroup('dob-day', 'dob-month', 'dob-year', 'input-dob');
   var plusOneDobGroup = setupDobSelectGroup('dob-day-plusone', 'dob-month-plusone', 'dob-year-plusone', 'input-plusone-dob');
+  var page2ScrollUpdate = setupScrollIndicator(
+    document.getElementById('page2-form-scroll'),
+    document.getElementById('page2-scroll-indicator')
+  );
 
   // Clear the age error as soon as a valid 18+ date is picked, without waiting for Next.
   function watchDobForLiveClear(inputId, errorId, rowEl) {
