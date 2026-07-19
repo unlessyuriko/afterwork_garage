@@ -83,10 +83,11 @@
   --color-input-border: rgba(220, 255, 220, 0.75);
   --color-red-star: #d81f26;
 
-  --poster-width-min: 340px;
-  --poster-width-max: 390px;
+  /* Grows on wider screens instead of staying pinned to a narrow mobile
+     card — stays ~390px on phones/tablet-portrait, up to 600px on desktop. */
+  --poster-width-max: clamp(390px, 40vw, 600px);
   --poster-height-min: 610px;
-  --poster-height-max: 700px;
+  --poster-height-max: 780px;
 
   --font-brush: 'HEINEKENCurve', sans-serif;
   --font-body: 'HEINEKENCurve', 'Georgia', serif;
@@ -103,10 +104,7 @@ html, body {
 }
 
 body {
-  background-image: url('../assets/Background.png');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+  background: #0d2f10;
   font-family: var(--font-body);
   color: var(--color-white);
   display: flex;
@@ -155,6 +153,7 @@ body {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
   padding: 22px 20px 18px;
 }
 
@@ -197,6 +196,9 @@ body {
 /* ---------- GreenButton ---------- */
 
 .green-button {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -205,6 +207,7 @@ body {
   padding: 0 16px;
   border-radius: 10px;
   border: none;
+  background-color: transparent;
   cursor: pointer;
   font-family: var(--font-body);
   font-weight: 700;
@@ -560,6 +563,7 @@ body {
   display: none;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
   animation: fadeIn 0.35s ease;
 }
 
@@ -585,8 +589,18 @@ body {
 
 .form-scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 2px;
+  /* Native scrollbar hidden in favor of the custom .scroll-indicator — on
+     desktop a classic (non-overlay) scrollbar would reserve its own layout
+     width on top of the indicator's, doubling up as an odd extra gap. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.form-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 /* Custom scroll indicator (track + thumb images) shown next to a
@@ -645,6 +659,12 @@ body {
   font-size: 0.82rem;
   line-height: 1.7;
   color: var(--color-white);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.terms-box::-webkit-scrollbar {
+  display: none;
 }
 
 .terms-box ul {

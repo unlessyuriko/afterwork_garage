@@ -482,6 +482,11 @@
     goToPage(2);
   });
 
+  setupScrollIndicator(
+    document.getElementById('page3-form-scroll'),
+    document.getElementById('page3-scroll-indicator')
+  );
+
   var interestBusiness = document.getElementById('interest-business');
   var interestFresh = document.getElementById('interest-fresh');
   var termsCheckbox = document.getElementById('terms-checkbox');
@@ -587,6 +592,11 @@
   document.getElementById('btn-page4-back').addEventListener('click', function () {
     goToPage(3);
   });
+
+  setupScrollIndicator(
+    document.getElementById('page4-terms-box'),
+    document.getElementById('page4-scroll-indicator')
+  );
 
   /* ---------- Page 5 ---------- */
 
