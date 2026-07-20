@@ -121,7 +121,11 @@
     function update() {
       var scrollHeight = scrollEl.scrollHeight;
       var clientHeight = scrollEl.clientHeight;
-      if (scrollHeight <= clientHeight + 1) {
+      // Generous tolerance: sub-pixel layout rounding (very common with
+      // flex layouts and custom fonts) can put scrollHeight a couple of
+      // pixels above clientHeight even when content visibly fits — that
+      // shouldn't be enough to falsely trigger the indicator.
+      if (scrollHeight <= clientHeight + 4) {
         indicatorEl.classList.add('hidden');
         return;
       }
@@ -137,6 +141,23 @@
 
     scrollEl.addEventListener('scroll', update);
     window.addEventListener('resize', update);
+
+    // The custom HEINEKENCurve font loads asynchronously — the very first
+    // measurement can happen against the fallback font's metrics, which
+    // renders text a bit taller and falsely locks in "needs scrolling"
+    // even after the real (more compact) font swaps in. Recheck once it's
+    // actually ready.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(update).catch(function () {});
+    }
+
+    // Recompute whenever the scrollable content's own size changes for any
+    // reason (font swap, a validation message appearing, zoom, etc.) —
+    // more robust than only reacting to window resize.
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(update).observe(scrollEl);
+    }
+
     update();
     return update;
   }
