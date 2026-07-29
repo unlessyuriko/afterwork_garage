@@ -59,7 +59,7 @@
   function hydrateFormFromState() {
     document.getElementById('input-name').value = state.name || '';
     document.getElementById('input-email').value = state.email || '';
-    document.getElementById('input-phone').value = state.phoneNumber || '';
+    document.getElementById('input-phone').value = stripPhonePrefix(state.phoneNumber);
     dobGroup.setValue(state.dateOfBirth || '');
     document.getElementById('input-org').value = state.organization || '';
 
@@ -70,7 +70,7 @@
 
     document.getElementById('input-plusone-name').value = state.plusOneName || '';
     document.getElementById('input-plusone-email').value = state.plusOneEmail || '';
-    document.getElementById('input-plusone-phone').value = state.plusOnePhoneNumber || '';
+    document.getElementById('input-plusone-phone').value = stripPhonePrefix(state.plusOnePhoneNumber);
     plusOneDobGroup.setValue(state.plusOneDateOfBirth || '');
     document.getElementById('input-plusone-org').value = state.plusOneOrganization || '';
     togglePlusOneFields(state.bringPlusOne === 'Yes');
@@ -96,10 +96,11 @@
     var container = document.getElementById('plus-one-fields');
     container.classList.toggle('visible', show);
     if (!show) {
-      ['input-plusone-name', 'input-plusone-email', 'input-plusone-phone', 'input-plusone-org'].forEach(function (id) {
+      ['input-plusone-name', 'input-plusone-email', 'input-plusone-org'].forEach(function (id) {
         var el = document.getElementById(id);
         clearFieldError(el, document.getElementById('err-' + id.replace('input-', '')));
       });
+      clearFieldError(document.getElementById('plusone-phone-input-wrap'), document.getElementById('err-plusone-phone'));
       clearFieldError(document.getElementById('dob-select-row-plusone'), document.getElementById('err-plusone-dob'));
     }
     page2BringingPlusOne = show;
@@ -172,10 +173,12 @@
     return update;
   }
 
+  // The +95 country code is now a fixed prefix in the UI, so this field only
+  // ever holds the local number — digits only, no +/-/space needed.
   function filterPhoneInput(e) {
     var cursorPos = e.target.selectionStart;
     var original = e.target.value;
-    var filtered = original.replace(/[^0-9+\-\s]/g, '');
+    var filtered = original.replace(/[^0-9]/g, '');
     if (filtered !== original) {
       e.target.value = filtered;
       var diff = original.length - filtered.length;
@@ -183,9 +186,19 @@
     }
   }
 
+  // value here is the LOCAL number only (no +95) — Myanmar mobile numbers
+  // are 7-10 digits after the country code (e.g. 9xxxxxxxx).
   function isValidPhone(value) {
     var digitsOnly = value.replace(/[^0-9]/g, '');
-    return !!value && digitsOnly.length >= 7 && /^[0-9+\-\s]+$/.test(value);
+    return digitsOnly.length >= 7 && digitsOnly.length <= 10 && digitsOnly === value;
+  }
+
+  function formatPhoneForStorage(localNumber) {
+    return '+95' + localNumber;
+  }
+
+  function stripPhonePrefix(fullNumber) {
+    return (fullNumber || '').replace(/^\+?95\s*/, '');
   }
 
   function isValidEmail(value) {
@@ -477,6 +490,7 @@
     var nameInput = document.getElementById('input-name');
     var emailInput = document.getElementById('input-email');
     var phoneInput = document.getElementById('input-phone');
+    var phoneWrap = document.getElementById('phone-input-wrap');
     var dobInput = document.getElementById('input-dob');
     var orgInput = document.getElementById('input-org');
 
@@ -493,6 +507,7 @@
     var plusOneNameInput = document.getElementById('input-plusone-name');
     var plusOneEmailInput = document.getElementById('input-plusone-email');
     var plusOnePhoneInput = document.getElementById('input-plusone-phone');
+    var plusOnePhoneWrap = document.getElementById('plusone-phone-input-wrap');
     var plusOneDobInput = document.getElementById('input-plusone-dob');
     var plusOneOrgInput = document.getElementById('input-plusone-org');
 
@@ -507,12 +522,12 @@
     [
       [nameInput, errName],
       [emailInput, errEmail],
-      [phoneInput, errPhone],
+      [phoneWrap, errPhone],
       [dobRow, errDob],
       [orgInput, errOrg],
       [plusOneNameInput, errPlusOneName],
       [plusOneEmailInput, errPlusOneEmail],
-      [plusOnePhoneInput, errPlusOnePhone],
+      [plusOnePhoneWrap, errPlusOnePhone],
       [plusOneDobRow, errPlusOneDob],
       [plusOneOrgInput, errPlusOneOrg]
     ].forEach(function (pair) {
@@ -538,11 +553,11 @@
     var phoneValue = phoneInput.value.trim();
     if (!phoneValue) {
       errPhone.textContent = 'Phone Number is required.';
-      showFieldError(phoneInput, errPhone);
+      showFieldError(phoneWrap, errPhone);
       isValid = false;
     } else if (!isValidPhone(phoneValue)) {
       errPhone.textContent = 'Please enter a valid phone number (numbers only).';
-      showFieldError(phoneInput, errPhone);
+      showFieldError(phoneWrap, errPhone);
       isValid = false;
     }
 
@@ -581,15 +596,15 @@
       var plusOnePhoneValue = plusOnePhoneInput.value.trim();
       if (!plusOnePhoneValue) {
         errPlusOnePhone.textContent = "Plus One's Phone Number is required.";
-        showFieldError(plusOnePhoneInput, errPlusOnePhone);
+        showFieldError(plusOnePhoneWrap, errPlusOnePhone);
         isValid = false;
       } else if (!isValidPhone(plusOnePhoneValue)) {
         errPlusOnePhone.textContent = 'Please enter a valid phone number (numbers only).';
-        showFieldError(plusOnePhoneInput, errPlusOnePhone);
+        showFieldError(plusOnePhoneWrap, errPlusOnePhone);
         isValid = false;
-      } else if (phoneValue && plusOnePhoneValue.replace(/[^0-9]/g, '') === phoneValue.replace(/[^0-9]/g, '')) {
+      } else if (phoneValue && plusOnePhoneValue === phoneValue) {
         errPlusOnePhone.textContent = "Plus One's phone number must be different from yours.";
-        showFieldError(plusOnePhoneInput, errPlusOnePhone);
+        showFieldError(plusOnePhoneWrap, errPlusOnePhone);
         isValid = false;
       }
 
@@ -618,7 +633,7 @@
 
     state.name = nameInput.value.trim();
     state.email = emailInput.value.trim();
-    state.phoneNumber = phoneInput.value.trim();
+    state.phoneNumber = formatPhoneForStorage(phoneInput.value.trim());
     state.dateOfBirth = dobInput.value.trim();
     state.organization = orgInput.value.trim();
     state.bringPlusOne = checkedPlusOne ? checkedPlusOne.value : '';
@@ -626,7 +641,7 @@
     if (bringingPlusOne) {
       state.plusOneName = plusOneNameInput.value.trim();
       state.plusOneEmail = plusOneEmailInput.value.trim();
-      state.plusOnePhoneNumber = plusOnePhoneInput.value.trim();
+      state.plusOnePhoneNumber = formatPhoneForStorage(plusOnePhoneInput.value.trim());
       state.plusOneDateOfBirth = plusOneDobInput.value.trim();
       state.plusOneOrganization = plusOneOrgInput.value.trim();
     } else {
@@ -669,7 +684,14 @@
 
   function updateSubmitButtonState() {
     var hasInterest = interestBusiness.checked || interestFresh.checked;
-    submitButton.disabled = !(hasInterest && hasViewedTerms && termsCheckbox.checked);
+    // Deliberately not using the native disabled attribute here: disabled
+    // form controls never fire click events at all, so tapping the button
+    // while it's "waiting" would do nothing and look broken. Instead it
+    // stays a real, clickable button styled to look disabled — the click
+    // handler below explains exactly what's missing when tapped early.
+    var ready = hasInterest && hasViewedTerms && termsCheckbox.checked;
+    submitButton.classList.toggle('is-disabled', !ready);
+    submitButton.setAttribute('aria-disabled', String(!ready));
   }
 
   // Only one interest can be selected at a time (behaves like a single-choice selection).
@@ -698,7 +720,6 @@
 
   document.getElementById('btn-page3-submit').addEventListener('click', function () {
     var banner = document.getElementById('page3-validation');
-    banner.textContent = TERMS_VALIDATION_MSG;
 
     var selectedInterest = interestBusiness.checked
       ? interestBusiness.value
@@ -710,7 +731,20 @@
       return;
     }
 
-    if (!selectedInterest || !termsCheckbox.checked) {
+    if (!selectedInterest && !termsCheckbox.checked) {
+      banner.textContent = 'Please select an interest and agree to the Terms and Conditions to continue.';
+      banner.classList.add('visible');
+      return;
+    }
+
+    if (!selectedInterest) {
+      banner.textContent = 'Please select what interests you most at Afterwork.';
+      banner.classList.add('visible');
+      return;
+    }
+
+    if (!termsCheckbox.checked) {
+      banner.textContent = TERMS_VALIDATION_MSG;
       banner.classList.add('visible');
       return;
     }
@@ -748,6 +782,7 @@
       banner.classList.add('visible');
     } finally {
       submitButton.innerHTML = originalContent;
+      submitButton.disabled = false;
       updateSubmitButtonState();
     }
   }
@@ -768,6 +803,52 @@
   document.getElementById('btn-share').addEventListener('click', function () {
     shareToStory();
   });
+
+  document.getElementById('btn-back-to-landing').addEventListener('click', function () {
+    goToPage(1);
+  });
+
+  document.getElementById('btn-add-to-calendar').addEventListener('click', function () {
+    downloadEventICS();
+  });
+
+  // Event date/time/venue mirror what's displayed on Page 1. Encoded as UTC
+  // instants (Myanmar Time is UTC+6:30) so the .ics is correct regardless of
+  // the guest's own timezone/device, without needing a VTIMEZONE block.
+  function downloadEventICS() {
+    function formatICSDate(date) {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    }
+
+    var startUTC = new Date(Date.UTC(2026, 4, 29, 11, 30, 0)); // 29 May 2026, 6:00 PM MMT
+    var endUTC = new Date(Date.UTC(2026, 4, 29, 14, 30, 0));   // 29 May 2026, 9:00 PM MMT
+
+    var icsLines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//AFTERWORK by Heineken//Registration//EN',
+      'BEGIN:VEVENT',
+      'UID:afterwork-' + Date.now() + '@afterworkbyheineken',
+      'DTSTAMP:' + formatICSDate(new Date()),
+      'DTSTART:' + formatICSDate(startUTC),
+      'DTEND:' + formatICSDate(endUTC),
+      'SUMMARY:' + EVENT_TITLE,
+      'DESCRIPTION:You\'re officially on the A-list! Dress code: Denim & Drive.',
+      'LOCATION:4th Floor Parking Area\\, Junction Square',
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ];
+
+    var blob = new Blob([icsLines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'afterwork-by-heineken.ics';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
 
   document.getElementById('btn-modal-close').addEventListener('click', function () {
     document.getElementById('share-modal').classList.remove('visible');
@@ -807,7 +888,7 @@
         style.textContent =
           '*{animation:none !important;transition:none !important;}' +
           '.page,.page.active{opacity:1 !important;transform:none !important;}' +
-          '#btn-share,.share-hint{visibility:hidden !important;}';
+          '#btn-share,.share-hint,.post-success-links{visibility:hidden !important;}';
         clonedDoc.head.appendChild(style);
       }
     });

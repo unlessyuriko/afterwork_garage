@@ -320,6 +320,22 @@ body {
   filter: grayscale(0.3);
 }
 
+/* Stronger, more obviously "off" look than the plain :disabled state above —
+   used for the Submit button while waiting on Interests/T&Cs, which stays a
+   real clickable button (see updateSubmitButtonState in app.js) so tapping
+   it early can explain why instead of doing nothing. */
+.green-button.is-disabled {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.green-button.is-disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .button-row {
   display: flex;
   align-items: center;
@@ -381,6 +397,42 @@ body {
 
 .glass-input:focus {
   box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 0 2px var(--color-green-bright), 0 0 14px rgba(80, 255, 140, 0.35);
+}
+
+/* .phone-input-wrap is a div, not a focusable input — it only gets the
+   focus glow when its inner text field is focused. */
+.glass-input:focus-within {
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 0 2px var(--color-green-bright), 0 0 14px rgba(80, 255, 140, 0.35);
+}
+
+.phone-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.phone-prefix {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: rgba(245, 255, 246, 0.85);
+  border-right: 1px solid rgba(220, 255, 220, 0.35);
+  padding-right: 8px;
+}
+
+.phone-input-field {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-white);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.phone-input-field::placeholder {
+  color: rgba(230, 255, 235, 0.45);
 }
 
 .glass-input.field-error {
@@ -661,7 +713,6 @@ body {
 /* ---------- Footer / collaboration branding ---------- */
 
 .collab-footer {
-  margin-top: auto;
   text-align: center;
   padding-top: 28px;
   padding-bottom: 10px;
@@ -682,6 +733,14 @@ body {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  /* On pages with a flex:1 scrollable area (the form pages), that area
+     already consumes all free space, so this has no effect there. On
+     lighter-content pages (landing, confirmation) there's no such element,
+     so without this the space would collect in one dead gap wherever an
+     auto-margin happened to be (previously the footer) instead of being
+     distributed around the content as a whole — very visible on the
+     taller desktop card size. */
+  justify-content: center;
   animation: fadeIn 0.35s ease;
 }
 
@@ -703,6 +762,25 @@ body {
   margin: 4px 0 16px;
   line-height: 1.4;
   text-shadow: 0 0 8px rgba(70, 255, 130, 0.3);
+}
+
+.page-title--terms {
+  font-weight: 900;
+  font-size: 1.05rem;
+  text-shadow: 0 0 10px rgba(70, 255, 130, 0.4), 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.placeholder-notice {
+  background: rgba(120, 90, 10, 0.4);
+  border: 1px solid rgba(255, 200, 90, 0.6);
+  color: #ffe4a8;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
 }
 
 .form-scroll {
@@ -792,11 +870,26 @@ body {
 
 .terms-box ul {
   margin: 0;
-  padding-left: 18px;
+  padding-left: 0;
+  list-style: none;
 }
 
 .terms-box li {
-  margin-bottom: 10px;
+  position: relative;
+  margin-bottom: 12px;
+  padding-left: 20px;
+}
+
+.terms-box li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-green-bright);
+  box-shadow: 0 0 5px rgba(80, 255, 140, 0.7);
 }
 
 /* ---------- Success page ---------- */
@@ -835,6 +928,70 @@ body {
   color: rgba(245, 255, 246, 0.75);
   line-height: 1.4;
   margin-top: 8px;
+}
+
+.post-success-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.text-link {
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  color: var(--color-green-bright);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.text-link:hover {
+  color: var(--color-white);
+}
+
+/* ---------- Step progress indicator ---------- */
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(220, 255, 220, 0.2);
+  border: 1px solid rgba(220, 255, 220, 0.5);
+  flex-shrink: 0;
+}
+
+.step-dot.active {
+  background: var(--color-green-bright);
+  border-color: var(--color-green-bright);
+  box-shadow: 0 0 6px rgba(80, 255, 140, 0.8);
+}
+
+.step-dot.completed {
+  background: var(--color-green-mid);
+  border-color: var(--color-green-bright);
+}
+
+.step-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(245, 255, 246, 0.75);
+  letter-spacing: 0.4px;
+  margin-left: 4px;
 }
 
 /* ---------- Validation banner ---------- */

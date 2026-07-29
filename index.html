@@ -54,6 +54,12 @@
           <img class="brand-logo brand-logo--small" src="assets/logo.png" alt="AFTERWORK by Heineken" />
         </header>
 
+        <div class="step-indicator" aria-label="Step 1 of 2">
+          <span class="step-dot active"></span>
+          <span class="step-dot"></span>
+          <span class="step-label">Step 1 of 2</span>
+        </div>
+
         <div class="validation-banner" id="page2-validation">Please fill in all required fields.</div>
 
         <div class="scroll-area">
@@ -72,7 +78,10 @@
 
           <div class="field-group">
             <label class="field-label" for="input-phone">Phone Number</label>
-            <input class="glass-input" type="tel" id="input-phone" placeholder="Enter your phone number" inputmode="numeric" pattern="[0-9+\-\s]*" maxlength="20" />
+            <div class="phone-input-wrap glass-input" id="phone-input-wrap">
+              <span class="phone-prefix">+95</span>
+              <input class="phone-input-field" type="tel" id="input-phone" placeholder="9xxxxxxxx" inputmode="numeric" maxlength="10" />
+            </div>
             <div class="field-error-msg" id="err-phone">Phone Number is required.</div>
           </div>
 
@@ -131,7 +140,10 @@
 
             <div class="field-group">
               <label class="field-label" for="input-plusone-phone">Plus One's Phone Number</label>
-              <input class="glass-input" type="tel" id="input-plusone-phone" placeholder="Enter plus one's phone number" inputmode="numeric" pattern="[0-9+\-\s]*" maxlength="20" />
+              <div class="phone-input-wrap glass-input" id="plusone-phone-input-wrap">
+                <span class="phone-prefix">+95</span>
+                <input class="phone-input-field" type="tel" id="input-plusone-phone" placeholder="9xxxxxxxx" inputmode="numeric" maxlength="10" />
+              </div>
               <div class="field-error-msg" id="err-plusone-phone">Plus One's Phone Number is required.</div>
             </div>
 
@@ -186,6 +198,12 @@
           <img class="brand-logo brand-logo--small" src="assets/logo.png" alt="AFTERWORK by Heineken" />
         </header>
 
+        <div class="step-indicator" aria-label="Step 2 of 2">
+          <span class="step-dot completed"></span>
+          <span class="step-dot active"></span>
+          <span class="step-label">Step 2 of 2</span>
+        </div>
+
         <div class="validation-banner" id="page3-validation">Please agree to the Terms and Conditions to continue.</div>
 
         <div class="scroll-area">
@@ -215,7 +233,7 @@
 
         <div class="button-row">
           <button class="green-button green-button--ghost" id="btn-page3-back"><img class="btn-label-img" src="assets/Back.png" alt="Back" /></button>
-          <button class="green-button" id="btn-page3-submit" disabled><img class="btn-label-img" src="assets/Submit.png" alt="Submit" /></button>
+          <button class="green-button is-disabled" id="btn-page3-submit" aria-disabled="true"><img class="btn-label-img" src="assets/Submit.png" alt="Submit" /></button>
         </div>
 
         <footer class="collab-footer">
@@ -229,7 +247,11 @@
           <img class="brand-logo brand-logo--small" src="assets/logo.png" alt="AFTERWORK by Heineken" />
         </header>
 
-        <p class="page-title">Terms &amp; Conditions for Afterwork by Heineken&reg;</p>
+        <p class="page-title page-title--terms">Terms &amp; Conditions for Afterwork by Heineken&reg;</p>
+
+        <div class="placeholder-notice">
+          &#9888; PLACEHOLDER COPY — not the final Terms &amp; Conditions. Marketing team's approved Burmese legal text has not been supplied yet.
+        </div>
 
         <div class="scroll-area">
         <div class="terms-box" id="page4-terms-box">
@@ -267,6 +289,11 @@
         </div>
 
         <p class="share-hint">Take a screenshot to claim exclusive<br />Heineken Rewards at the event.</p>
+
+        <div class="post-success-links">
+          <button type="button" class="text-link" id="btn-add-to-calendar">+ Add to Calendar</button>
+          <button type="button" class="text-link" id="btn-back-to-landing">&larr; Back to Event Details</button>
+        </div>
 
         <footer class="collab-footer">
           <img class="collab-footer-image" src="assets/Main-TIV.png" alt="In collaboration with Yangonation and The Collector's Garage — It could only be Heineken." />
