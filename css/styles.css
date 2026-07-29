@@ -86,7 +86,7 @@
   /* Grows on wider screens instead of staying pinned to a narrow mobile
      card — stays ~390px on phones/tablet-portrait, up to 600px on desktop. */
   --poster-width-max: clamp(390px, 40vw, 600px);
-  --poster-height-min: 610px;
+  --poster-height-min: 660px;
   --poster-height-max: 860px;
 
   --font-brush: 'HEINEKENCurve', sans-serif;
@@ -325,13 +325,13 @@ body {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-top: 10px;
+  margin-top: 14px;
 }
 
 /* ---------- GlassInput ---------- */
 
 .field-group {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .plus-one-fields {
@@ -401,26 +401,73 @@ body {
 }
 
 .dob-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
   width: 100%;
-  padding-right: 26px;
   cursor: pointer;
 }
 
-.dob-select-arrow {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
+/* ---------- Custom themed dropdown (replaces native <select>) ---------- */
+
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.custom-select-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-trigger .dob-select-arrow {
   font-size: 0.65rem;
   color: rgba(230, 255, 235, 0.7);
+  margin-left: 6px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.custom-select-trigger.open .dob-select-arrow {
+  transform: rotate(180deg);
 }
 
 .dob-select-row.field-error .dob-select {
   box-shadow: inset 0 1px 4px rgba(0,0,0,0.4), 0 0 0 2px #ff8a8a, 0 0 10px rgba(255, 80, 80, 0.35);
+}
+
+/* Rendered on <body> (not inside .dob-select-wrap) and positioned via JS
+   with position:fixed, so it's never clipped by the scrollable form area
+   or the poster card's own overflow:hidden. */
+.custom-select-panel {
+  position: fixed;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #163d1a 0%, #0b2a0e 100%);
+  border: 2px solid var(--color-input-border);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(70, 255, 130, 0.25);
+  padding: 4px;
+  z-index: 200;
+}
+
+.custom-select-option {
+  padding: 8px 10px;
+  border-radius: 5px;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--color-white);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.custom-select-option:hover {
+  background: rgba(80, 255, 140, 0.2);
+}
+
+.custom-select-option.selected {
+  background: rgba(80, 255, 140, 0.32);
+  font-weight: 700;
 }
 
 .field-error-msg {
@@ -683,6 +730,11 @@ body {
   flex: 1;
   min-height: 0;
   gap: 8px;
+  /* Clips this row to its allocated flex height. Without it, any sub-pixel
+     stretch/rounding discrepancy in .form-scroll's height can let its box
+     render a hair taller than intended and visually bleed into the
+     button-row sitting right below it. */
+  overflow: hidden;
 }
 
 .scroll-area .form-scroll {

@@ -41,6 +41,9 @@
   }
 
   function goToPage(pageNumber) {
+    if (typeof closeAllCustomDropdowns === 'function') {
+      closeAllCustomDropdowns();
+    }
     var pages = document.querySelectorAll('.page');
     for (var i = 0; i < pages.length; i++) {
       pages[i].classList.remove('active');
@@ -99,26 +102,33 @@
       });
       clearFieldError(document.getElementById('dob-select-row-plusone'), document.getElementById('err-plusone-dob'));
     }
+    page2BringingPlusOne = show;
     if (typeof page2ScrollUpdate === 'function') {
       page2ScrollUpdate();
     }
-    // With "No" (or nothing) selected, the base fields fit the card without
-    // scrolling — force the indicator hidden regardless of measurement, so
-    // it only ever appears once the Plus One fields actually add overflow.
-    var page2Indicator = document.getElementById('page2-scroll-indicator');
-    if (page2Indicator && !show) {
-      page2Indicator.classList.add('hidden');
-    }
   }
+
+  // Whether Page 2's scroll indicator is allowed to show at all — set by
+  // togglePlusOneFields. Read by that indicator's update() on every call,
+  // not just the one that runs right after toggling, so a later font-load
+  // or resize recheck can't re-show it while "No" is selected.
+  var page2BringingPlusOne = false;
 
   // Drives a custom track+thumb scroll indicator next to a .form-scroll,
   // since mobile browsers generally hide native scrollbars regardless of CSS
   // styling. Returns an update() function to call whenever the scrollable
   // content's height changes (e.g. the Plus One fields appearing).
-  function setupScrollIndicator(scrollEl, indicatorEl) {
+  // isEnabled, if given, is checked on every update() call — while it
+  // returns false the indicator stays forced-hidden regardless of measured
+  // overflow (used on Page 2 so it can only ever show when Plus One is Yes).
+  function setupScrollIndicator(scrollEl, indicatorEl, isEnabled) {
     var thumb = indicatorEl.querySelector('.scroll-thumb');
 
     function update() {
+      if (isEnabled && !isEnabled()) {
+        indicatorEl.classList.add('hidden');
+        return;
+      }
       var scrollHeight = scrollEl.scrollHeight;
       var clientHeight = scrollEl.clientHeight;
       // Generous tolerance: sub-pixel layout rounding (very common with
@@ -188,91 +198,217 @@
     return n < 10 ? '0' + n : String(n);
   }
 
-  function populateDaySelect(select, dayCount) {
-    var currentValue = select.value;
-    while (select.options.length > 1) {
-      select.remove(1);
-    }
-    for (var d = 1; d <= dayCount; d++) {
-      var opt = document.createElement('option');
-      opt.value = pad2(d);
-      opt.textContent = pad2(d);
-      select.appendChild(opt);
-    }
-    if (currentValue && Number(currentValue) <= dayCount) {
-      select.value = currentValue;
-    }
+  // ---------- Custom themed dropdown (replaces native <select>) ----------
+  // Panels are appended to <body> and positioned with position:fixed via JS,
+  // so they're never clipped by the scrollable form area or the poster
+  // card's own overflow:hidden, and always render above everything else.
+
+  var allCustomDropdowns = [];
+
+  function closeAllCustomDropdowns() {
+    allCustomDropdowns.forEach(function (d) { d.close(); });
   }
+  document.addEventListener('click', closeAllCustomDropdowns);
 
-  // Wires up a Day/Month/Year select trio that scrolls natively (desktop dropdown,
-  // mobile wheel picker) instead of the fiddly native <input type="date"> calendar.
-  // Keeps a hidden input in sync so the rest of the validation code (which reads
-  // a single 'YYYY-MM-DD' value) doesn't need to change.
-  function setupDobSelectGroup(dayId, monthId, yearId, hiddenId) {
-    var daySelect = document.getElementById(dayId);
-    var monthSelect = document.getElementById(monthId);
-    var yearSelect = document.getElementById(yearId);
-    var hiddenInput = document.getElementById(hiddenId);
+  function createCustomDropdown(triggerEl, placeholderText) {
+    var currentValue = '';
+    var options = [];
+    var valueEl = triggerEl.querySelector('.custom-select-value');
 
-    MONTH_NAMES.forEach(function (name, index) {
-      var opt = document.createElement('option');
-      opt.value = pad2(index + 1);
-      opt.textContent = name;
-      monthSelect.appendChild(opt);
-    });
+    var panelEl = document.createElement('div');
+    panelEl.className = 'custom-select-panel';
+    panelEl.setAttribute('role', 'listbox');
+    panelEl.hidden = true;
+    document.body.appendChild(panelEl);
 
-    var currentYear = new Date().getFullYear();
-    for (var y = currentYear; y >= currentYear - 100; y--) {
-      var opt = document.createElement('option');
-      opt.value = String(y);
-      opt.textContent = String(y);
-      yearSelect.appendChild(opt);
+    function renderOptions() {
+      panelEl.innerHTML = '';
+      options.forEach(function (opt) {
+        var item = document.createElement('div');
+        item.className = 'custom-select-option' + (opt.value === currentValue ? ' selected' : '');
+        item.setAttribute('role', 'option');
+        item.textContent = opt.label;
+        item.addEventListener('click', function (e) {
+          e.stopPropagation();
+          setValue(opt.value);
+          close();
+          if (dropdown.onChange) {
+            dropdown.onChange(opt.value);
+          }
+        });
+        panelEl.appendChild(item);
+      });
     }
 
-    populateDaySelect(daySelect, 31);
-
-    function refreshDayCount() {
-      if (monthSelect.value && yearSelect.value) {
-        var daysInMonth = new Date(Number(yearSelect.value), Number(monthSelect.value), 0).getDate();
-        populateDaySelect(daySelect, daysInMonth);
+    function position() {
+      var rect = triggerEl.getBoundingClientRect();
+      var maxHeight = 180;
+      var spaceBelow = window.innerHeight - rect.bottom;
+      var spaceAbove = rect.top;
+      panelEl.style.left = rect.left + 'px';
+      panelEl.style.width = rect.width + 'px';
+      if (spaceBelow < maxHeight + 8 && spaceAbove > spaceBelow) {
+        panelEl.style.top = '';
+        panelEl.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+        panelEl.style.maxHeight = Math.min(maxHeight, spaceAbove - 8) + 'px';
       } else {
-        populateDaySelect(daySelect, 31);
+        panelEl.style.bottom = '';
+        panelEl.style.top = (rect.bottom + 4) + 'px';
+        panelEl.style.maxHeight = Math.min(maxHeight, spaceBelow - 8) + 'px';
       }
     }
 
+    function open() {
+      closeAllCustomDropdowns();
+      position();
+      panelEl.hidden = false;
+      triggerEl.classList.add('open');
+      triggerEl.setAttribute('aria-expanded', 'true');
+      var selected = panelEl.querySelector('.selected');
+      if (selected) {
+        selected.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    function close() {
+      panelEl.hidden = true;
+      triggerEl.classList.remove('open');
+      triggerEl.setAttribute('aria-expanded', 'false');
+    }
+
+    function setValue(value) {
+      currentValue = value;
+      var match = null;
+      for (var i = 0; i < options.length; i++) {
+        if (options[i].value === value) {
+          match = options[i];
+          break;
+        }
+      }
+      valueEl.textContent = match ? match.label : placeholderText;
+      renderOptions();
+    }
+
+    function setOptions(newOptions, keepValueIfPossible) {
+      options = newOptions;
+      if (keepValueIfPossible && currentValue) {
+        var stillValid = options.some(function (o) { return o.value === currentValue; });
+        if (!stillValid) {
+          currentValue = '';
+          valueEl.textContent = placeholderText;
+        }
+      }
+      renderOptions();
+    }
+
+    triggerEl.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (panelEl.hidden) {
+        open();
+      } else {
+        close();
+      }
+    });
+
+    window.addEventListener('resize', function () {
+      if (!panelEl.hidden) {
+        position();
+      }
+    });
+    window.addEventListener('scroll', function () {
+      if (!panelEl.hidden) {
+        position();
+      }
+    }, true);
+
+    var dropdown = {
+      open: open,
+      close: close,
+      setValue: setValue,
+      getValue: function () { return currentValue; },
+      setOptions: setOptions,
+      onChange: null
+    };
+    allCustomDropdowns.push(dropdown);
+    return dropdown;
+  }
+
+  // Wires up a Day/Month/Year custom-dropdown trio, themed to match the site
+  // instead of the browser's native <select> popup. Keeps a hidden input in
+  // sync so the rest of the validation code (which reads a single
+  // 'YYYY-MM-DD' value) doesn't need to change.
+  function setupDobSelectGroup(dayId, monthId, yearId, hiddenId) {
+    var dayDropdown = createCustomDropdown(document.getElementById(dayId), 'DD');
+    var monthDropdown = createCustomDropdown(document.getElementById(monthId), 'MM');
+    var yearDropdown = createCustomDropdown(document.getElementById(yearId), 'YYYY');
+    var hiddenInput = document.getElementById(hiddenId);
+
+    monthDropdown.setOptions(MONTH_NAMES.map(function (name, index) {
+      return { value: pad2(index + 1), label: name };
+    }));
+
+    var currentYear = new Date().getFullYear();
+    var yearOptions = [];
+    for (var y = currentYear; y >= currentYear - 100; y--) {
+      yearOptions.push({ value: String(y), label: String(y) });
+    }
+    yearDropdown.setOptions(yearOptions);
+
+    function dayOptionsFor(count) {
+      var opts = [];
+      for (var d = 1; d <= count; d++) {
+        opts.push({ value: pad2(d), label: pad2(d) });
+      }
+      return opts;
+    }
+    dayDropdown.setOptions(dayOptionsFor(31));
+
+    function refreshDayCount() {
+      var month = monthDropdown.getValue();
+      var year = yearDropdown.getValue();
+      var count = 31;
+      if (month && year) {
+        count = new Date(Number(year), Number(month), 0).getDate();
+      }
+      dayDropdown.setOptions(dayOptionsFor(count), true);
+    }
+
     function syncHiddenValue() {
-      if (daySelect.value && monthSelect.value && yearSelect.value) {
-        hiddenInput.value = yearSelect.value + '-' + monthSelect.value + '-' + daySelect.value;
+      var d = dayDropdown.getValue();
+      var m = monthDropdown.getValue();
+      var yr = yearDropdown.getValue();
+      if (d && m && yr) {
+        hiddenInput.value = yr + '-' + m + '-' + d;
       } else {
         hiddenInput.value = '';
       }
       hiddenInput.dispatchEvent(new Event('change'));
     }
 
-    daySelect.addEventListener('change', syncHiddenValue);
-    monthSelect.addEventListener('change', function () {
+    dayDropdown.onChange = syncHiddenValue;
+    monthDropdown.onChange = function () {
       refreshDayCount();
       syncHiddenValue();
-    });
-    yearSelect.addEventListener('change', function () {
+    };
+    yearDropdown.onChange = function () {
       refreshDayCount();
       syncHiddenValue();
-    });
+    };
 
     return {
       setValue: function (isoDate) {
         if (!isoDate) {
-          daySelect.value = '';
-          monthSelect.value = '';
-          yearSelect.value = '';
+          dayDropdown.setValue('');
+          monthDropdown.setValue('');
+          yearDropdown.setValue('');
           hiddenInput.value = '';
           return;
         }
         var parts = isoDate.split('-');
-        yearSelect.value = parts[0] || '';
-        monthSelect.value = parts[1] || '';
+        yearDropdown.setValue(parts[0] || '');
+        monthDropdown.setValue(parts[1] || '');
         refreshDayCount();
-        daySelect.value = parts[2] || '';
+        dayDropdown.setValue(parts[2] || '');
         hiddenInput.value = isoDate;
       }
     };
@@ -314,7 +450,8 @@
   var plusOneDobGroup = setupDobSelectGroup('dob-day-plusone', 'dob-month-plusone', 'dob-year-plusone', 'input-plusone-dob');
   var page2ScrollUpdate = setupScrollIndicator(
     document.getElementById('page2-form-scroll'),
-    document.getElementById('page2-scroll-indicator')
+    document.getElementById('page2-scroll-indicator'),
+    function () { return page2BringingPlusOne; }
   );
 
   // Clear the age error as soon as a valid 18+ date is picked, without waiting for Next.
