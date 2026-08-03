@@ -396,13 +396,17 @@ body {
 }
 
 .glass-input:focus {
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 0 2px var(--color-green-bright), 0 0 14px rgba(80, 255, 140, 0.35);
+  /* No outer solid ring here — the field's background image already has
+     its own border baked in, so a "0 0 0 2px" ring drawn just outside it
+     looked like a second border sticking out past the field's edge.
+     An inset glow reads as "lit up" without adding a second outline. */
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(80, 255, 140, 0.45), 0 0 10px rgba(80, 255, 140, 0.3);
 }
 
 /* .phone-input-wrap is a div, not a focusable input — it only gets the
    focus glow when its inner text field is focused. */
 .glass-input:focus-within {
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 0 2px var(--color-green-bright), 0 0 14px rgba(80, 255, 140, 0.35);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(80, 255, 140, 0.45), 0 0 10px rgba(80, 255, 140, 0.3);
 }
 
 .phone-input-wrap {
@@ -436,7 +440,7 @@ body {
 }
 
 .glass-input.field-error {
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.4), 0 0 0 2px #ff8a8a, 0 0 10px rgba(255, 80, 80, 0.35);
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.4), inset 0 0 10px rgba(255, 80, 80, 0.5), 0 0 10px rgba(255, 80, 80, 0.3);
 }
 
 /* ---------- Date of Birth (Day/Month/Year selects) ---------- */
@@ -486,7 +490,7 @@ body {
 }
 
 .dob-select-row.field-error .dob-select {
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.4), 0 0 0 2px #ff8a8a, 0 0 10px rgba(255, 80, 80, 0.35);
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.4), inset 0 0 10px rgba(255, 80, 80, 0.5), 0 0 10px rgba(255, 80, 80, 0.3);
 }
 
 /* Rendered on <body> (not inside .dob-select-wrap) and positioned via JS
@@ -680,7 +684,12 @@ body {
 
 .event-detail-item {
   display: flex;
-  align-items: center;
+  /* flex-start (not center) so every icon lines up with the TOP/first line
+     of its text consistently — with align-items:center, an icon next to
+     2-3 line wrapped text (the venue address) sits lower than an icon next
+     to single-line text (e.g. "Denim & Drive"), so icons ended up at
+     different heights relative to each other across the grid. */
+  align-items: flex-start;
   /* Centers the icon+text as a unit within its grid cell, and centers
      wrapped text onto its own lines — otherwise items with short text
      (e.g. "Denim & Drive") sit flush-left while longer-wrapping items
@@ -905,14 +914,30 @@ body {
   font-size: 1.5rem;
   line-height: 1.3;
   color: var(--color-white);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  /* Bold poster/headline look: a solid dark outline around the letters
+     (stroke + layered shadow, since -webkit-text-stroke alone renders
+     inconsistently across browsers) instead of a plain soft drop-shadow. */
+  -webkit-text-stroke: 1.25px #04150a;
+  text-shadow:
+    -2px -2px 0 #04150a,
+    2px -2px 0 #04150a,
+    -2px 2px 0 #04150a,
+    2px 2px 0 #04150a,
+    0 5px 10px rgba(0, 0, 0, 0.55);
   margin: 8px 0;
 }
 
 .success-message .sub-line {
-  font-size: 0.85rem;
-  color: rgba(245, 255, 246, 0.85);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-white);
   font-style: italic;
+  -webkit-text-stroke: 0.6px #04150a;
+  text-shadow:
+    -1px -1px 0 #04150a,
+    1px -1px 0 #04150a,
+    -1px 1px 0 #04150a,
+    1px 1px 0 #04150a;
 }
 
 .share-hint {
