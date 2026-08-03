@@ -684,18 +684,13 @@ body {
 
 .event-detail-item {
   display: flex;
-  /* flex-start (not center) so every icon lines up with the TOP/first line
-     of its text consistently — with align-items:center, an icon next to
-     2-3 line wrapped text (the venue address) sits lower than an icon next
-     to single-line text (e.g. "Denim & Drive"), so icons ended up at
-     different heights relative to each other across the grid. */
-  align-items: flex-start;
-  /* Centers the icon+text as a unit within its grid cell, and centers
-     wrapped text onto its own lines — otherwise items with short text
-     (e.g. "Denim & Drive") sit flush-left while longer-wrapping items
-     (e.g. the venue address) look visually unbalanced next to them. */
-  justify-content: center;
-  text-align: center;
+  /* Icon vertically centered against its own text block, whether that's
+     one line or wraps to two (e.g. the venue address) — and the whole
+     icon+text group left-aligned as a block, not centered, matching a
+     standard left-reading info list. */
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
   gap: 8px;
   font-size: 0.74rem;
   line-height: 1.3;
