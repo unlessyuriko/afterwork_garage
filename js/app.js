@@ -518,12 +518,16 @@
     var errPlusOneOrg = document.getElementById('err-plusone-org');
 
     var isValid = true;
-    // Tracks whether any REQUIRED field is actually empty, as opposed to
-    // filled-but-invalid (bad email format, under 18, duplicate phone,
-    // etc.) — so the banner doesn't claim "fill in all required fields"
-    // when everything's filled and the real issue is something else, like
-    // the attendee being under 18.
-    var hasEmptyRequiredField = false;
+    // The banner shows this verbatim instead of a generic summary — set to
+    // the first specific error message encountered (same text as shown
+    // under its field), so e.g. an under-18 Plus One shows that exact
+    // message up top instead of a vague "check the fields" line.
+    var firstErrorMessage = null;
+    function noteError(errorEl) {
+      if (!firstErrorMessage) {
+        firstErrorMessage = errorEl.textContent;
+      }
+    }
 
     [
       [nameInput, errName],
@@ -543,7 +547,7 @@
     if (!nameInput.value.trim()) {
       showFieldError(nameInput, errName);
       isValid = false;
-      hasEmptyRequiredField = true;
+      noteError(errName);
     }
 
     var emailValue = emailInput.value.trim();
@@ -551,11 +555,12 @@
       errEmail.textContent = 'Mail is required.';
       showFieldError(emailInput, errEmail);
       isValid = false;
-      hasEmptyRequiredField = true;
+      noteError(errEmail);
     } else if (!isValidEmail(emailValue)) {
       errEmail.textContent = 'Please enter a valid email address.';
       showFieldError(emailInput, errEmail);
       isValid = false;
+      noteError(errEmail);
     }
 
     var phoneValue = phoneInput.value.trim();
@@ -563,11 +568,12 @@
       errPhone.textContent = 'Phone Number is required.';
       showFieldError(phoneWrap, errPhone);
       isValid = false;
-      hasEmptyRequiredField = true;
+      noteError(errPhone);
     } else if (!isValidPhone(phoneValue)) {
       errPhone.textContent = 'Please enter a valid phone number (numbers only).';
       showFieldError(phoneWrap, errPhone);
       isValid = false;
+      noteError(errPhone);
     }
 
     var dobValue = dobInput.value.trim();
@@ -575,23 +581,24 @@
       errDob.textContent = 'Date of Birth is required.';
       showFieldError(dobRow, errDob);
       isValid = false;
-      hasEmptyRequiredField = true;
+      noteError(errDob);
     } else if (!isAtLeast18(dobValue)) {
       errDob.textContent = 'You must be at least 18 years old to register.';
       showFieldError(dobRow, errDob);
       isValid = false;
+      noteError(errDob);
     }
     if (!orgInput.value.trim()) {
       showFieldError(orgInput, errOrg);
       isValid = false;
-      hasEmptyRequiredField = true;
+      noteError(errOrg);
     }
 
     if (bringingPlusOne) {
       if (!plusOneNameInput.value.trim()) {
         showFieldError(plusOneNameInput, errPlusOneName);
         isValid = false;
-        hasEmptyRequiredField = true;
+        noteError(errPlusOneName);
       }
 
       var plusOneEmailValue = plusOneEmailInput.value.trim();
@@ -599,11 +606,12 @@
         errPlusOneEmail.textContent = "Plus One's Mail is required.";
         showFieldError(plusOneEmailInput, errPlusOneEmail);
         isValid = false;
-        hasEmptyRequiredField = true;
+        noteError(errPlusOneEmail);
       } else if (!isValidEmail(plusOneEmailValue)) {
         errPlusOneEmail.textContent = 'Please enter a valid email address.';
         showFieldError(plusOneEmailInput, errPlusOneEmail);
         isValid = false;
+        noteError(errPlusOneEmail);
       }
 
       var plusOnePhoneValue = plusOnePhoneInput.value.trim();
@@ -611,15 +619,17 @@
         errPlusOnePhone.textContent = "Plus One's Phone Number is required.";
         showFieldError(plusOnePhoneWrap, errPlusOnePhone);
         isValid = false;
-        hasEmptyRequiredField = true;
+        noteError(errPlusOnePhone);
       } else if (!isValidPhone(plusOnePhoneValue)) {
         errPlusOnePhone.textContent = 'Please enter a valid phone number (numbers only).';
         showFieldError(plusOnePhoneWrap, errPlusOnePhone);
         isValid = false;
+        noteError(errPlusOnePhone);
       } else if (phoneValue && plusOnePhoneValue === phoneValue) {
         errPlusOnePhone.textContent = "Plus One's phone number must be different from yours.";
         showFieldError(plusOnePhoneWrap, errPlusOnePhone);
         isValid = false;
+        noteError(errPlusOnePhone);
       }
 
       var plusOneDobValue = plusOneDobInput.value.trim();
@@ -627,23 +637,22 @@
         errPlusOneDob.textContent = "Plus One's Date of Birth is required.";
         showFieldError(plusOneDobRow, errPlusOneDob);
         isValid = false;
-        hasEmptyRequiredField = true;
+        noteError(errPlusOneDob);
       } else if (!isAtLeast18(plusOneDobValue)) {
         errPlusOneDob.textContent = 'Plus One must be at least 18 years old.';
         showFieldError(plusOneDobRow, errPlusOneDob);
         isValid = false;
+        noteError(errPlusOneDob);
       }
       if (!plusOneOrgInput.value.trim()) {
         showFieldError(plusOneOrgInput, errPlusOneOrg);
         isValid = false;
-        hasEmptyRequiredField = true;
+        noteError(errPlusOneOrg);
       }
     }
 
     if (!isValid) {
-      banner.textContent = hasEmptyRequiredField
-        ? 'Please fill in all required fields.'
-        : 'Please check the highlighted field(s) below.';
+      banner.textContent = firstErrorMessage || 'Please check the highlighted field(s) below.';
       banner.classList.add('visible');
       return;
     }
@@ -823,13 +832,22 @@
     shareToStory();
   });
 
-  document.getElementById('btn-back-to-landing').addEventListener('click', function () {
-    goToPage(1);
-  });
+  // Add to Calendar / Back to Event Details links are commented out in the
+  // HTML for now — guarding these listeners the same way so re-enabling
+  // both later is just uncommenting in one place each.
+  var btnBackToLanding = document.getElementById('btn-back-to-landing');
+  if (btnBackToLanding) {
+    btnBackToLanding.addEventListener('click', function () {
+      goToPage(1);
+    });
+  }
 
-  document.getElementById('btn-add-to-calendar').addEventListener('click', function () {
-    downloadEventICS();
-  });
+  var btnAddToCalendar = document.getElementById('btn-add-to-calendar');
+  if (btnAddToCalendar) {
+    btnAddToCalendar.addEventListener('click', function () {
+      downloadEventICS();
+    });
+  }
 
   // Event date/time/venue mirror what's displayed on Page 1. Encoded as UTC
   // instants (Myanmar Time is UTC+6:30) so the .ics is correct regardless of
