@@ -518,6 +518,12 @@
     var errPlusOneOrg = document.getElementById('err-plusone-org');
 
     var isValid = true;
+    // Tracks whether any REQUIRED field is actually empty, as opposed to
+    // filled-but-invalid (bad email format, under 18, duplicate phone,
+    // etc.) — so the banner doesn't claim "fill in all required fields"
+    // when everything's filled and the real issue is something else, like
+    // the attendee being under 18.
+    var hasEmptyRequiredField = false;
 
     [
       [nameInput, errName],
@@ -537,6 +543,7 @@
     if (!nameInput.value.trim()) {
       showFieldError(nameInput, errName);
       isValid = false;
+      hasEmptyRequiredField = true;
     }
 
     var emailValue = emailInput.value.trim();
@@ -544,6 +551,7 @@
       errEmail.textContent = 'Mail is required.';
       showFieldError(emailInput, errEmail);
       isValid = false;
+      hasEmptyRequiredField = true;
     } else if (!isValidEmail(emailValue)) {
       errEmail.textContent = 'Please enter a valid email address.';
       showFieldError(emailInput, errEmail);
@@ -555,6 +563,7 @@
       errPhone.textContent = 'Phone Number is required.';
       showFieldError(phoneWrap, errPhone);
       isValid = false;
+      hasEmptyRequiredField = true;
     } else if (!isValidPhone(phoneValue)) {
       errPhone.textContent = 'Please enter a valid phone number (numbers only).';
       showFieldError(phoneWrap, errPhone);
@@ -566,6 +575,7 @@
       errDob.textContent = 'Date of Birth is required.';
       showFieldError(dobRow, errDob);
       isValid = false;
+      hasEmptyRequiredField = true;
     } else if (!isAtLeast18(dobValue)) {
       errDob.textContent = 'You must be at least 18 years old to register.';
       showFieldError(dobRow, errDob);
@@ -574,12 +584,14 @@
     if (!orgInput.value.trim()) {
       showFieldError(orgInput, errOrg);
       isValid = false;
+      hasEmptyRequiredField = true;
     }
 
     if (bringingPlusOne) {
       if (!plusOneNameInput.value.trim()) {
         showFieldError(plusOneNameInput, errPlusOneName);
         isValid = false;
+        hasEmptyRequiredField = true;
       }
 
       var plusOneEmailValue = plusOneEmailInput.value.trim();
@@ -587,6 +599,7 @@
         errPlusOneEmail.textContent = "Plus One's Mail is required.";
         showFieldError(plusOneEmailInput, errPlusOneEmail);
         isValid = false;
+        hasEmptyRequiredField = true;
       } else if (!isValidEmail(plusOneEmailValue)) {
         errPlusOneEmail.textContent = 'Please enter a valid email address.';
         showFieldError(plusOneEmailInput, errPlusOneEmail);
@@ -598,6 +611,7 @@
         errPlusOnePhone.textContent = "Plus One's Phone Number is required.";
         showFieldError(plusOnePhoneWrap, errPlusOnePhone);
         isValid = false;
+        hasEmptyRequiredField = true;
       } else if (!isValidPhone(plusOnePhoneValue)) {
         errPlusOnePhone.textContent = 'Please enter a valid phone number (numbers only).';
         showFieldError(plusOnePhoneWrap, errPlusOnePhone);
@@ -613,6 +627,7 @@
         errPlusOneDob.textContent = "Plus One's Date of Birth is required.";
         showFieldError(plusOneDobRow, errPlusOneDob);
         isValid = false;
+        hasEmptyRequiredField = true;
       } else if (!isAtLeast18(plusOneDobValue)) {
         errPlusOneDob.textContent = 'Plus One must be at least 18 years old.';
         showFieldError(plusOneDobRow, errPlusOneDob);
@@ -621,10 +636,14 @@
       if (!plusOneOrgInput.value.trim()) {
         showFieldError(plusOneOrgInput, errPlusOneOrg);
         isValid = false;
+        hasEmptyRequiredField = true;
       }
     }
 
     if (!isValid) {
+      banner.textContent = hasEmptyRequiredField
+        ? 'Please fill in all required fields.'
+        : 'Please check the highlighted field(s) below.';
       banner.classList.add('visible');
       return;
     }

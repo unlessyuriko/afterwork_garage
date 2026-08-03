@@ -681,6 +681,12 @@ body {
 .event-detail-item {
   display: flex;
   align-items: center;
+  /* Centers the icon+text as a unit within its grid cell, and centers
+     wrapped text onto its own lines — otherwise items with short text
+     (e.g. "Denim & Drive") sit flush-left while longer-wrapping items
+     (e.g. the venue address) look visually unbalanced next to them. */
+  justify-content: center;
+  text-align: center;
   gap: 8px;
   font-size: 0.74rem;
   line-height: 1.3;
