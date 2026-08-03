@@ -679,7 +679,8 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px 10px;
-  margin: 16px 0;
+  margin: 16px auto;
+  max-width: 88%;
 }
 
 .event-detail-item {
